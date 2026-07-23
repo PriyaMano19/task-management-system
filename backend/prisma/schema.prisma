@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TokenType {
+  ACCESS
+  REFRESH
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+
+  users           User[]
+  rolePermissions RolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Permission {
+  id String @id @default(cuid())
+
+  module String
+  action String
+
+  name String @unique
+
+  description String?
+
+  rolePermissions RolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([module, action])
+}
+
+model RolePermission {
+  id String @id @default(cuid())
+
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model User {
+  id         String   @id @default(uuid())
+
+  firstName  String
+  lastName   String
+  email      String   @unique
+  password   String
+
+  status      UserStatus @default(ACTIVE)
+  lastLogin   DateTime?
+
+  roleId String
+  role   Role @relation(fields: [roleId], references: [id])
+
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RefreshToken {
+  id String @id @default(cuid())
+
+  token String @unique
+
+  expiresAt DateTime
+
+  revoked Boolean @default(false)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+
+  action String
+
+  module String
+
+  recordId String?
+
+  ipAddress String?
+
+  userAgent String?
+
+  userId String?
+  user   User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
