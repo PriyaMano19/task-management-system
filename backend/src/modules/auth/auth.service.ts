@@ -20,18 +20,18 @@ export const login = async (
 ) => {
   const user = await findUserByEmail(email);
 
-  if (!user) {
-    throw new Error("Invalid email or password");
-  }
+if (!user) {
+  throw new Error("Email address not found.");
+}
 
-  const passwordMatched = await bcrypt.compare(
-    password,
-    user.password
-  );
+const passwordMatched = await bcrypt.compare(
+  password,
+  user.password
+);
 
-  if (!passwordMatched) {
-    throw new Error("Invalid email or password");
-  }
+if (!passwordMatched) {
+  throw new Error("Incorrect password.");
+}
 
   const payload = {
     userId: user.id,

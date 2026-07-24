@@ -8,6 +8,7 @@ export default function AppProvider({
 }: {
   children: React.ReactNode;
 }) {
+
   return (
     <ReduxProvider>
       <QueryProvider>{children}</QueryProvider>

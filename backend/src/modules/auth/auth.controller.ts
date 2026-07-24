@@ -5,15 +5,22 @@ export const loginController = async (
   req: Request,
   res: Response
 ) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const result = await login(email, password);
+    const result = await login(email, password);
 
-  return res.status(200).json({
-    success: true,
-    message: "Login successful",
-    data: result,
-  });
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      data: result,
+    });
+  } catch (error: any) {
+    return res.status(401).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 export const getCurrentUserController = async (
   req: Request,
