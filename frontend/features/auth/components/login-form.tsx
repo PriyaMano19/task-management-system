@@ -68,9 +68,8 @@ export default function LoginForm() {
       {/* Header */}
       <div className="mt-8 text-center">
         <div className="mt-6 flex justify-center">
-          <span className="relative text-sm font-semibold uppercase tracking-[0.35em] text-[#0A2E63]">
+          <span className="relative text-l font-bold uppercase  text-[#0A2E63]">
             IPHONIK TASK MANAGEMENT
-
             <span className="absolute -bottom-3 left-1/2 h-[3px] w-14 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#0A2E63] to-[#E53935]" />
           </span>
         </div>

@@ -4,11 +4,12 @@ import {
   getCurrentUserController,
   refreshTokenController,
   logoutController,
-  resetPasswordController
+  resetPasswordController,
+  updateProfileController
 } from "./auth.controller";
 import { validate } from "../../middleware/validate.middleware";
 import { authenticate } from "../../middleware/auth.middleware";
-import { loginSchema ,refreshTokenSchema,logoutSchema,resetPasswordSchema} from "./auth.schema";
+import { loginSchema ,refreshTokenSchema,logoutSchema,resetPasswordSchema,updateProfileSchema} from "./auth.schema";
 import { authorize } from "../../middleware/authorize.middleware";
 
 const router = Router();
@@ -51,5 +52,10 @@ router.put(
   validate(resetPasswordSchema),
   resetPasswordController
 );
-
+router.put(
+  "/profile",
+  authenticate,
+  validate(updateProfileSchema),
+  updateProfileController
+);
 export default router;

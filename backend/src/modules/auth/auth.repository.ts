@@ -1,16 +1,29 @@
 import prisma from "../../database/prisma";
-
-export const findUserByEmail = async (email: string) => {
+export const findUserById = async (id: string) => {
   return prisma.user.findUnique({
     where: {
+      id,
+    },
+  });
+};
+export const findUserByEmail = async (
+  email: string,
+  excludeUserId?: string
+) => {
+  return prisma.user.findFirst({
+    where: {
       email,
+      ...(excludeUserId && {
+        NOT: {
+          id: excludeUserId,
+        },
+      }),
     },
     include: {
       role: true,
     },
   });
 };
-
 export const saveRefreshToken = async (
   userId: string,
   token: string,
@@ -100,6 +113,30 @@ export const deleteUserRefreshTokens = async (
   return prisma.refreshToken.deleteMany({
     where: {
       userId,
+    },
+  });
+};
+export const updateUserProfile = async (
+  userId: string,
+  data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string | null;
+  }
+) => {
+  return prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+     
+    },
+    include: {
+      role: true,
     },
   });
 };
