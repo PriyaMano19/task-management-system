@@ -1,6 +1,11 @@
 import { Router } from "express";
 import authRoutes from "../modules/auth/auth.routes";
-
+import projectRoutes from "../modules/projects/project.routes";
+import projectFolderRoutes from "../modules/project-folders/projectFolder.routes";
+import taskRoutes from "../modules/tasks/task.routes";
+import commentRoutes from "../modules/task-comments/comment.routes";
+import taskActivityRoutes
+  from "../modules/task-activities/taskActivity.routes";
 const router = Router();
 
 router.get("/", (_req, res) => {
@@ -11,5 +16,14 @@ router.get("/", (_req, res) => {
 });
 
 router.use("/auth", authRoutes);
+router.use("/projects", projectRoutes);
+router.use("/projects", projectFolderRoutes);
+router.use("/projects", taskRoutes);
+router.use("/projects", commentRoutes);
+router.use(
+  "/projects",
+  taskActivityRoutes
+);
+
 
 export default router;

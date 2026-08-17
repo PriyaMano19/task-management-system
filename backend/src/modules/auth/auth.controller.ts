@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import { login,logout,refreshAccessToken,resetPassword } from "./auth.service";
+import { login,logout,refreshAccessToken,resetPassword ,  updateProfile,
+} from "./auth.service";
 
 export const loginController = async (
   req: Request,
@@ -35,6 +36,8 @@ export const getCurrentUserController = async (
       lastName: req.user!.lastName,
       email: req.user!.email,
       role: req.user!.role.name,
+      status: req.user!.status,
+      createdAt: req.user!.createdAt,
     },
   });
 };
@@ -83,6 +86,21 @@ export const resetPasswordController = async (
       req.user!.id,
       newPassword
     );
+
+    return res.status(200).json(result);
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+export const updateProfileController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const result = await updateProfile(req.user!.id, req.body);
 
     return res.status(200).json(result);
   } catch (error: any) {

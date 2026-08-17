@@ -8,6 +8,7 @@ import {
   deleteRefreshToken,
   updatePassword,
   deleteUserRefreshTokens,
+  updateUserProfile
 } from "./auth.repository";
 import {
   generateAccessToken,
@@ -123,5 +124,30 @@ export const resetPassword = async (
   return {
     success: true,
     message: "Password updated successfully. Please login again.",
+  };
+};
+export const updateProfile = async (
+  userId: string,
+  data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+  }
+) => {
+  const updatedUser = await updateUserProfile(userId, data);
+
+  return {
+    success: true,
+    message: "Profile updated successfully.",
+    data: {
+      id: updatedUser.id,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      email: updatedUser.email,
+      role: updatedUser.role.name,
+      status: updatedUser.status,
+      createdAt: updatedUser.createdAt,
+    },
   };
 };

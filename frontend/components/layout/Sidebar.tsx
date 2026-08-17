@@ -55,8 +55,8 @@ export default function Sidebar() {
         <Image
           src="/images/side-logo.png"
           alt="iPhonik Logo"
-          width={180}
-          height={50}
+          width={150}
+          height={30}
           priority
           className="h-auto w-auto object-contain"
         />
