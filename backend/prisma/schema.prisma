@@ -12,6 +12,19 @@ enum UserStatus {
   INACTIVE
 }
 
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
 enum TokenType {
   ACCESS
   REFRESH
@@ -88,6 +101,13 @@ model User {
   projectMembers  ProjectMember[]
   createdProjects Project[]       @relation("CreatedProjects")
 
+  createdFolders ProjectFolder[] @relation("CreatedFolders")
+
+  assignedTasks Task[] @relation("AssignedTasks")
+
+  createdTasks            Task[]           @relation("CreatedTasks")
+  uploadedTaskAttachments TaskAttachment[] @relation("UploadedTaskAttachments")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -142,6 +162,7 @@ model Project {
   createdBy   User   @relation("CreatedProjects", fields: [createdById], references: [id])
 
   members ProjectMember[]
+  folders ProjectFolder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -161,4 +182,71 @@ model ProjectMember {
   createdAt DateTime @default(now())
 
   @@unique([projectId, userId])
+}
+
+model ProjectFolder {
+  id String @id @default(cuid())
+
+  projectId   String
+  name        String
+  description String?
+
+  createdById String
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("CreatedFolders", fields: [createdById], references: [id])
+
+  tasks Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, name])
+}
+
+model Task {
+  id String @id @default(cuid())
+
+  folderId    String
+  title       String
+  description String?
+
+  status   TaskStatus   @default(TODO)
+  priority TaskPriority @default(MEDIUM)
+
+  assignedToId String?
+  createdById  String
+
+  dueDate DateTime?
+
+  folder ProjectFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  assignedTo User? @relation("AssignedTasks", fields: [assignedToId], references: [id])
+
+  createdBy User @relation("CreatedTasks", fields: [createdById], references: [id])
+
+  attachments TaskAttachment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TaskAttachment {
+  id String @id @default(cuid())
+
+  taskId String
+
+  originalName String
+  fileName     String
+  filePath     String
+  mimeType     String
+  fileSize     Int
+
+  uploadedById String
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  uploadedBy User @relation("UploadedTaskAttachments", fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
 }
