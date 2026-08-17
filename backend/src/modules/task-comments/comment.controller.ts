@@ -4,19 +4,21 @@ import {
   NextFunction,
 } from "express";
 
-import { projectFolderService } from "./projectFolder.service";
+import { commentService } from "./comment.service";
 import { getParam } from "../../shared/utils/getParam";
 
+
 // ============================================================
-// CREATE FOLDER
+// CREATE COMMENT
 // ============================================================
 
-export const createFolder = async (
+export const createComment = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
+
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -27,17 +29,25 @@ export const createFolder = async (
     const projectId =
       getParam(req.params.projectId);
 
-    const folder =
-      await projectFolderService.createFolder(
+    const folderId =
+      getParam(req.params.folderId);
+
+    const taskId =
+      getParam(req.params.taskId);
+
+    const comment =
+      await commentService.createComment(
         projectId,
+        folderId,
+        taskId,
         req.user.id,
         req.body
       );
 
     return res.status(201).json({
       success: true,
-      message: "Folder created successfully.",
-      data: folder,
+      message: "Comment added successfully.",
+      data: comment,
     });
 
   } catch (error) {
@@ -47,50 +57,10 @@ export const createFolder = async (
 
 
 // ============================================================
-// GET ALL FOLDERS
+// GET COMMENTS
 // ============================================================
 
-export const getFolders = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    const projectId =
-      getParam(req.params.projectId);
-
-    const folders =
-      await projectFolderService.getFolders(
-        projectId,
-        req.user.id
-      );
-
-    return res.status(200).json({
-      success: true,
-      message:
-        "Project folders retrieved successfully.",
-      data: folders,
-    });
-
-  } catch (error) {
-    next(error);
-  }
-};
-
-
-// ============================================================
-// GET FOLDER BY ID
-// ============================================================
-
-export const getFolderById = async (
+export const getComments = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -110,17 +80,21 @@ export const getFolderById = async (
     const folderId =
       getParam(req.params.folderId);
 
-    const folder =
-      await projectFolderService.getFolderById(
+    const taskId =
+      getParam(req.params.taskId);
+
+    const comments =
+      await commentService.getComments(
         projectId,
         folderId,
+        taskId,
         req.user.id
       );
 
     return res.status(200).json({
       success: true,
-      message: "Folder retrieved successfully.",
-      data: folder,
+      message: "Comments retrieved successfully.",
+      data: comments,
     });
 
   } catch (error) {
@@ -130,10 +104,10 @@ export const getFolderById = async (
 
 
 // ============================================================
-// UPDATE FOLDER
+// UPDATE COMMENT
 // ============================================================
 
-export const updateFolder = async (
+export const updateComment = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -153,18 +127,26 @@ export const updateFolder = async (
     const folderId =
       getParam(req.params.folderId);
 
-    const folder =
-      await projectFolderService.updateFolder(
+    const taskId =
+      getParam(req.params.taskId);
+
+    const commentId =
+      getParam(req.params.commentId);
+
+    const comment =
+      await commentService.updateComment(
         projectId,
         folderId,
+        taskId,
+        commentId,
         req.user.id,
         req.body
       );
 
     return res.status(200).json({
       success: true,
-      message: "Folder updated successfully.",
-      data: folder,
+      message: "Comment updated successfully.",
+      data: comment,
     });
 
   } catch (error) {
@@ -174,10 +156,10 @@ export const updateFolder = async (
 
 
 // ============================================================
-// DELETE FOLDER
+// DELETE COMMENT
 // ============================================================
 
-export const deleteFolder = async (
+export const deleteComment = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -197,15 +179,23 @@ export const deleteFolder = async (
     const folderId =
       getParam(req.params.folderId);
 
-    await projectFolderService.deleteFolder(
+    const taskId =
+      getParam(req.params.taskId);
+
+    const commentId =
+      getParam(req.params.commentId);
+
+    await commentService.deleteComment(
       projectId,
       folderId,
+      taskId,
+      commentId,
       req.user.id
     );
 
     return res.status(200).json({
       success: true,
-      message: "Folder deleted successfully.",
+      message: "Comment deleted successfully.",
     });
 
   } catch (error) {

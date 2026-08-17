@@ -55,11 +55,11 @@ class ProjectFolderRepository {
           },
         },
 
-        // _count: {
-        //   select: {
-        //     tasks: true,
-        //   },
-        // },
+        _count: {
+          select: {
+            tasks: true,
+          },
+        },
       },
 
       orderBy: {
@@ -96,11 +96,11 @@ class ProjectFolderRepository {
           },
         },
 
-        // _count: {
-        //   select: {
-        //     tasks: true,
-        //   },
-        // },
+        _count: {
+          select: {
+            tasks: true,
+          },
+        },
       },
     });
   }
@@ -117,9 +117,10 @@ class ProjectFolderRepository {
           mode: "insensitive",
         },
       },
+
     });
   }
-
+  
   async update(
     folderId: string,
     data: UpdateProjectFolderDto
