@@ -8,9 +8,6 @@ import { commentService } from "./comment.service";
 import { getParam } from "../../shared/utils/getParam";
 
 
-// ============================================================
-// CREATE COMMENT
-// ============================================================
 
 export const createComment = async (
   req: Request,
@@ -56,9 +53,6 @@ export const createComment = async (
 };
 
 
-// ============================================================
-// GET COMMENTS
-// ============================================================
 
 export const getComments = async (
   req: Request,
@@ -103,9 +97,6 @@ export const getComments = async (
 };
 
 
-// ============================================================
-// UPDATE COMMENT
-// ============================================================
 
 export const updateComment = async (
   req: Request,
@@ -155,9 +146,6 @@ export const updateComment = async (
 };
 
 
-// ============================================================
-// DELETE COMMENT
-// ============================================================
 
 export const deleteComment = async (
   req: Request,

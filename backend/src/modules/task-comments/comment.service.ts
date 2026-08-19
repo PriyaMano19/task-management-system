@@ -14,9 +14,6 @@ import { commentRepository } from "./comment.repository";
 
 class CommentService {
 
-  // ============================================================
-  // VALIDATE TASK
-  // ============================================================
 
   private async validateTask(
     projectId: string,
@@ -53,10 +50,6 @@ class CommentService {
     return task;
   }
 
-
-  // ============================================================
-  // CREATE COMMENT
-  // ============================================================
 
   async createComment(
     projectId: string,
@@ -98,9 +91,6 @@ class CommentService {
   }
 
 
-  // ============================================================
-  // GET COMMENTS
-  // ============================================================
 
   async getComments(
     projectId: string,
@@ -128,9 +118,6 @@ class CommentService {
   }
 
 
-  // ============================================================
-  // UPDATE COMMENT
-  // ============================================================
 
   async updateComment(
     projectId: string,
@@ -197,9 +184,6 @@ class CommentService {
   }
 
 
-  // ============================================================
-  // DELETE COMMENT
-  // ============================================================
 
   async deleteComment(
     projectId: string,

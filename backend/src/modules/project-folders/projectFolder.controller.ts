@@ -7,9 +7,6 @@ import {
 import { projectFolderService } from "./projectFolder.service";
 import { getParam } from "../../shared/utils/getParam";
 
-// ============================================================
-// CREATE FOLDER
-// ============================================================
 
 export const createFolder = async (
   req: Request,
@@ -46,9 +43,6 @@ export const createFolder = async (
 };
 
 
-// ============================================================
-// GET ALL FOLDERS
-// ============================================================
 
 export const getFolders = async (
   req: Request,
@@ -86,9 +80,6 @@ export const getFolders = async (
 };
 
 
-// ============================================================
-// GET FOLDER BY ID
-// ============================================================
 
 export const getFolderById = async (
   req: Request,
@@ -129,9 +120,6 @@ export const getFolderById = async (
 };
 
 
-// ============================================================
-// UPDATE FOLDER
-// ============================================================
 
 export const updateFolder = async (
   req: Request,
@@ -173,9 +161,6 @@ export const updateFolder = async (
 };
 
 
-// ============================================================
-// DELETE FOLDER
-// ============================================================
 
 export const deleteFolder = async (
   req: Request,

@@ -5,7 +5,9 @@ import { createProject ,getProjects,deleteProject, getProjectById,updateProject,
   getProjectMembers,
   removeProjectMember,} from "./project.controller";
 import { createProjectSchema ,addProjectMemberSchema,updateProjectSchema} from "./project.schema";
-
+import {
+  getProjectDashboard,
+} from "./projectDashboard.controller";
 const router = Router();
 
 router.post(
@@ -19,6 +21,11 @@ router.get(
   "/",
   authenticate,
   getProjects
+);
+router.get(
+  "/:projectId/dashboard",
+  authenticate,
+  getProjectDashboard
 );
 router.get(
   "/:id",
@@ -54,4 +61,6 @@ router.delete(
   authenticate,
   removeProjectMember
 );
+
+
 export default router;

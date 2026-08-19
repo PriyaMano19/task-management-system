@@ -3,9 +3,6 @@ import { taskService } from "./task.service";
 import { getParam } from "../../shared/utils/getParam";
 import { taskAttachmentService } from "./taskAttachment.service";
 
-// ============================================================
-// CREATE TASK
-// ============================================================
 
 export const createTask = async (
   req: Request,
@@ -50,9 +47,6 @@ export const createTask = async (
 };
 
 
-// ============================================================
-// GET TASKS
-// ============================================================
 
 export const getTasks = async (
   req: Request,
@@ -94,9 +88,6 @@ export const getTasks = async (
 };
 
 
-// ============================================================
-// GET TASK BY ID
-// ============================================================
 
 export const getTaskById = async (
   req: Request,
@@ -140,10 +131,6 @@ export const getTaskById = async (
   }
 };
 
-
-// ============================================================
-// UPDATE TASK
-// ============================================================
 
 export const updateTask = async (
   req: Request,
@@ -189,9 +176,6 @@ export const updateTask = async (
 };
 
 
-// ============================================================
-// DELETE TASK
-// ============================================================
 
 export const deleteTask = async (
   req: Request,
@@ -233,10 +217,6 @@ export const deleteTask = async (
   }
 };
 
-
-// ============================================================
-// GET TASK ATTACHMENTS
-// ============================================================
 
 export const getTaskAttachments = async (
   req: Request,
@@ -281,9 +261,6 @@ export const getTaskAttachments = async (
 };
 
 
-// ============================================================
-// DOWNLOAD TASK ATTACHMENT
-// ============================================================
 
 export const downloadTaskAttachment = async (
   req: Request,
@@ -330,9 +307,6 @@ export const downloadTaskAttachment = async (
 };
 
 
-// ============================================================
-// DELETE TASK ATTACHMENT
-// ============================================================
 
 export const deleteTaskAttachment = async (
   req: Request,

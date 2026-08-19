@@ -72,15 +72,21 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Ignore non-401 errors
-    if (error.response?.status !== 401) {
-      return Promise.reject(error);
-    }
+  if (error.response?.status !== 401) {
+  return Promise.reject(error);
+}
 
-    // Prevent infinite refresh loops
-    if (originalRequest._retry) {
-      return Promise.reject(error);
-    }
+// If the refresh endpoint itself returns 401,
+// do not try to refresh again.
+if (originalRequest.url === "/auth/refresh") {
+  logoutUser();
+  return Promise.reject(error);
+}
+
+// Prevent infinite refresh loops
+if (originalRequest._retry) {
+  return Promise.reject(error);
+}
 
     originalRequest._retry = true;
 
