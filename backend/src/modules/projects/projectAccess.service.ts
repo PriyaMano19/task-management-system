@@ -4,10 +4,6 @@ import { projectMemberRepository } from "./projectMember.repository";
 
 class ProjectAccessService {
 
-  // ============================================================
-  // CHECK PROJECT EXISTS
-  // ============================================================
-
   async validateProject(projectId: string) {
     const project =
       await projectRepository.findById(projectId);
@@ -22,10 +18,6 @@ class ProjectAccessService {
     return project;
   }
 
-
-  // ============================================================
-  // CHECK USER IS A PROJECT MEMBER
-  // ============================================================
 
   async validateProjectMember(
     projectId: string,
@@ -51,9 +43,6 @@ class ProjectAccessService {
   }
 
 
-  // ============================================================
-  // CHECK PROJECT + MEMBER
-  // ============================================================
 
   async validateProjectAccess(
     projectId: string,

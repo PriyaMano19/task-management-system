@@ -11,9 +11,6 @@ import {
 
 class ProjectFolderService {
 
-  // ============================================================
-  // CREATE FOLDER
-  // ============================================================
 
   async createFolder(
     projectId: string,
@@ -49,10 +46,6 @@ class ProjectFolderService {
   }
 
 
-  // ============================================================
-  // GET ALL FOLDERS
-  // ============================================================
-
   async getFolders(
     projectId: string,
     userId: string
@@ -69,10 +62,6 @@ class ProjectFolderService {
     );
   }
 
-
-  // ============================================================
-  // GET FOLDER BY ID
-  // ============================================================
 
   async getFolderById(
     projectId: string,
@@ -103,9 +92,6 @@ class ProjectFolderService {
   }
 
 
-  // ============================================================
-  // UPDATE FOLDER
-  // ============================================================
 
   async updateFolder(
     projectId: string,
@@ -159,10 +145,6 @@ class ProjectFolderService {
     );
   }
 
-
-  // ============================================================
-  // DELETE FOLDER
-  // ============================================================
 
   async deleteFolder(
     projectId: string,

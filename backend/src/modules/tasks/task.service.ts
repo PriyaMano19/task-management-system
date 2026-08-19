@@ -15,10 +15,7 @@ import { AppError } from "../../shared/errors/AppError";
 
 class TaskService {
 
-  // ============================================================
-  // CREATE TASK
-  // ============================================================
-
+ 
   async createTask(
     projectId: string,
     folderId: string,
@@ -126,9 +123,6 @@ class TaskService {
   }
 
 
-  // ============================================================
-  // GET TASKS
-  // ============================================================
 
   async getTasks(
     projectId: string,
@@ -194,9 +188,6 @@ class TaskService {
   }
 
 
-  // ============================================================
-  // GET TASK BY ID
-  // ============================================================
 
   async getTaskById(
     projectId: string,
@@ -243,10 +234,7 @@ class TaskService {
   }
 
 
-  // ============================================================
-  // UPDATE TASK
-  // ============================================================
-
+ 
   async updateTask(
     projectId: string,
     folderId: string,
@@ -266,10 +254,7 @@ class TaskService {
       );
 
 
-    // ==========================================================
-    // VALIDATE ASSIGNED MEMBER
-    // ==========================================================
-
+ 
     if (
       data.assignedToId !== undefined &&
       data.assignedToId !== null
@@ -290,10 +275,7 @@ class TaskService {
     }
 
 
-    // ==========================================================
-    // UPDATE TASK
-    // ==========================================================
-
+ 
     const updatedTask =
       await taskRepository.update(
         task.id,
@@ -301,9 +283,6 @@ class TaskService {
       );
 
 
-    // ==========================================================
-    // STATUS CHANGE
-    // ==========================================================
 
     if (
       data.status !== undefined &&
@@ -321,10 +300,7 @@ class TaskService {
     }
 
 
-    // ==========================================================
-    // PRIORITY CHANGE
-    // ==========================================================
-
+  
     if (
       data.priority !== undefined &&
       data.priority !== task.priority
@@ -341,10 +317,7 @@ class TaskService {
     }
 
 
-    // ==========================================================
-    // ASSIGNEE CHANGE
-    // ==========================================================
-
+  
     if (
       data.assignedToId !== undefined &&
       data.assignedToId !== task.assignedToId
@@ -362,10 +335,6 @@ class TaskService {
       });
     }
 
-
-    // ==========================================================
-    // DUE DATE CHANGE
-    // ==========================================================
 
     if (
       data.dueDate !== undefined &&
@@ -392,10 +361,7 @@ class TaskService {
     }
 
 
-    // ==========================================================
-    // TITLE CHANGE
-    // ==========================================================
-
+  
     if (
       data.title !== undefined &&
       data.title !== task.title
@@ -412,10 +378,7 @@ class TaskService {
     }
 
 
-    // ==========================================================
-    // DESCRIPTION CHANGE
-    // ==========================================================
-
+ 
     if (
       data.description !== undefined &&
       data.description !== task.description
@@ -438,9 +401,6 @@ class TaskService {
   }
 
 
-  // ============================================================
-  // DELETE TASK
-  // ============================================================
 
   async deleteTask(
     projectId: string,

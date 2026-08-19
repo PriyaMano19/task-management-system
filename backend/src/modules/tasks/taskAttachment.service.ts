@@ -9,9 +9,6 @@ import { taskActivityRepository } from "../task-activities/taskActivity.reposito
 
 class TaskAttachmentService {
 
-  // ============================================================
-  // GET ALL ATTACHMENTS
-  // ============================================================
 
   async getAttachments(
     projectId: string,
@@ -51,10 +48,7 @@ class TaskAttachmentService {
   }
 
 
-  // ============================================================
-  // GET SINGLE ATTACHMENT
-  // ============================================================
-
+ 
   async getAttachment(
     projectId: string,
     folderId: string,
@@ -105,9 +99,6 @@ class TaskAttachmentService {
   }
 
 
-  // ============================================================
-  // DELETE ATTACHMENT
-  // ============================================================
 
   async deleteAttachment(
     projectId: string,
@@ -127,9 +118,6 @@ class TaskAttachmentService {
       );
 
 
-    // ==========================================================
-    // 1. Delete physical file
-    // ==========================================================
 
     try {
 
@@ -148,11 +136,7 @@ class TaskAttachmentService {
     }
 
 
-    // ==========================================================
-    // 2. Create activity BEFORE deleting
-    //    the database record
-    // ==========================================================
-
+ 
     await taskActivityRepository.create({
       taskId,
       userId,
@@ -162,9 +146,6 @@ class TaskAttachmentService {
     });
 
 
-    // ==========================================================
-    // 3. Delete database record
-    // ==========================================================
 
     await taskAttachmentRepository.delete(
       attachment.id
