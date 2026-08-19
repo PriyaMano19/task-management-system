@@ -289,7 +289,7 @@ const fetchDashboard = useCallback(
 
           <p className="mt-2 text-sm text-muted-foreground">
             {error ||
-              "Something went wrong while loading your dashboard."}
+              "Something went wrong while loading  dashboard."}
           </p>
 
           <button
@@ -463,7 +463,7 @@ const fetchDashboard = useCallback(
           </div>
 
           <p className="mt-4 text-xs text-muted-foreground">
-            Across your projects
+            Across  the projects
           </p>
         </div>
 
@@ -697,11 +697,11 @@ const fetchDashboard = useCallback(
 
           <div>
             <h3 className="font-semibold text-card-foreground">
-              Your Projects
+               Projects
             </h3>
 
             <p className="mt-1 text-xs text-muted-foreground">
-              Projects you are currently working on
+              Projects the team currently working on
             </p>
           </div>
 

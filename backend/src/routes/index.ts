@@ -10,6 +10,7 @@ import taskActivityRoutes
   from "../modules/task-activities/taskActivity.routes";
   import dashboardRoutes
   from "../modules/dashboard/dashboard.routes";
+  import permissionRoutes from "../modules/permissions/permission.routes";
 const router = Router();
 
 router.get("/", (_req, res) => {
@@ -40,6 +41,9 @@ router.use(
   "/roles",
   roleRoutes
 );
-
+router.use(
+  "/permissions",
+  permissionRoutes
+);
 
 export default router;

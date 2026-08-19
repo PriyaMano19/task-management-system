@@ -1,16 +1,14 @@
-import { dashboardRepository } from "./dashboard.repository";
-
+import {
+  dashboardRepository,
+} from "./dashboard.repository";
 
 class DashboardService {
 
-  async getGlobalDashboard(userId: string) {
 
+  async getGlobalDashboard() {
     const dashboard =
-      await dashboardRepository.getGlobalDashboard(
-        userId
-      );
+      await dashboardRepository.getGlobalDashboard();
 
-  
     const totalProjects =
       dashboard.projectCounts.reduce(
         (sum, item) =>
@@ -20,31 +18,34 @@ class DashboardService {
 
     const planningProjects =
       dashboard.projectCounts.find(
-        item => item.status === "PLANNING"
+        item =>
+          item.status === "PLANNING"
       )?._count._all ?? 0;
 
     const activeProjects =
       dashboard.projectCounts.find(
-        item => item.status === "ACTIVE"
+        item =>
+          item.status === "ACTIVE"
       )?._count._all ?? 0;
 
     const onHoldProjects =
       dashboard.projectCounts.find(
-        item => item.status === "ON_HOLD"
+        item =>
+          item.status === "ON_HOLD"
       )?._count._all ?? 0;
 
     const completedProjects =
       dashboard.projectCounts.find(
-        item => item.status === "COMPLETED"
+        item =>
+          item.status === "COMPLETED"
       )?._count._all ?? 0;
 
     const cancelledProjects =
       dashboard.projectCounts.find(
-        item => item.status === "CANCELLED"
+        item =>
+          item.status === "CANCELLED"
       )?._count._all ?? 0;
 
-
- 
     const totalTasks =
       dashboard.taskCounts.reduce(
         (sum, item) =>
@@ -54,59 +55,66 @@ class DashboardService {
 
     const todoTasks =
       dashboard.taskCounts.find(
-        item => item.status === "TODO"
+        item =>
+          item.status === "TODO"
       )?._count._all ?? 0;
 
     const inProgressTasks =
       dashboard.taskCounts.find(
-        item => item.status === "IN_PROGRESS"
+        item =>
+          item.status === "IN_PROGRESS"
+      )?._count._all ?? 0;
+
+    const holdTasks =
+      dashboard.taskCounts.find(
+        item =>
+          item.status === "HOLD"
       )?._count._all ?? 0;
 
     const doneTasks =
       dashboard.taskCounts.find(
-        item => item.status === "DONE"
+        item =>
+          item.status === "DONE"
       )?._count._all ?? 0;
 
-
- 
     const projects =
-      dashboard.projects.map(project => {
+      dashboard.projects.map(
+        project => {
 
-        const totalProjectTasks =
-          project.folders.reduce(
-            (sum, folder) =>
-              sum + folder._count.tasks,
-            0
-          );
+          const totalProjectTasks =
+            project.folders.reduce(
+              (sum, folder) =>
+                sum +
+                folder._count.tasks,
+              0
+            );
 
-        return {
-          id: project.id,
+          return {
+            id: project.id,
 
-          companyName:
-            project.companyName,
+            companyName:
+              project.companyName,
 
-          projectName:
-            project.projectName,
+            projectName:
+              project.projectName,
 
-          status:
-            project.status,
+            status:
+              project.status,
 
-          members:
-            project._count.members,
+            members:
+              project._count.members,
 
-          folders:
-            project._count.folders,
+            folders:
+              project._count.folders,
 
-          tasks:
-            totalProjectTasks,
-        };
-      });
-
+            tasks:
+              totalProjectTasks,
+          };
+        }
+      );
 
     return {
-
       summary: {
-
         projects: {
           total: totalProjects,
           planning: planningProjects,
@@ -120,12 +128,132 @@ class DashboardService {
           total: totalTasks,
           todo: todoTasks,
           inProgress: inProgressTasks,
+          hold: holdTasks,
           done: doneTasks,
         },
 
         members:
           dashboard.memberCount.length,
       },
+
+      projects,
+    };
+  }
+
+
+  async getMyDashboard(
+    userId: string
+  ) {
+    const dashboard =
+      await dashboardRepository.getMyDashboard(
+        userId
+      );
+
+ 
+    const projects =
+      dashboard.projects.map(
+        project => {
+
+          const totalTasks =
+            project.folders.reduce(
+              (sum, folder) =>
+                sum +
+                folder._count.tasks,
+              0
+            );
+
+          return {
+            id: project.id,
+
+            companyName:
+              project.companyName,
+
+            projectName:
+              project.projectName,
+
+            status:
+              project.status,
+
+            members:
+              project._count.members,
+
+            folders:
+              project._count.folders,
+
+            tasks:
+              totalTasks,
+          };
+        }
+      );
+
+
+    const totalTasks =
+      dashboard.taskCounts.reduce(
+        (sum, item) =>
+          sum + item._count._all,
+        0
+      );
+
+    const todo =
+      dashboard.taskCounts.find(
+        item =>
+          item.status === "TODO"
+      )?._count._all ?? 0;
+
+    const inProgress =
+      dashboard.taskCounts.find(
+        item =>
+          item.status === "IN_PROGRESS"
+      )?._count._all ?? 0;
+
+    const hold =
+      dashboard.taskCounts.find(
+        item =>
+          item.status === "HOLD"
+      )?._count._all ?? 0;
+
+    const done =
+      dashboard.taskCounts.find(
+        item =>
+          item.status === "DONE"
+      )?._count._all ?? 0;
+
+ 
+    const completionPercentage =
+      totalTasks > 0
+        ? Math.round(
+            (done / totalTasks) * 100
+          )
+        : 0;
+
+    return {
+      summary: {
+        projects: projects.length,
+
+        tasks: totalTasks,
+
+        inProgress,
+
+        completed: done,
+
+        overdue:
+          dashboard.overdueCount,
+
+        completionPercentage,
+      },
+
+      taskProgress: {
+        todo,
+        inProgress,
+        hold,
+        done,
+      },
+
+      tasks:
+        dashboard.assignedTasks,
+
+      upcomingDeadlines:
+        dashboard.upcomingTasks,
 
       projects,
     };

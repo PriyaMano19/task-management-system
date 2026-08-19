@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 
 import api from "@/services/api";
+import { authApi } from "@/features/auth/api/auth.api";
 
 
 type ProjectStatus =
@@ -285,7 +286,7 @@ const [selectedMemberId, setSelectedMemberId] =
 
 const [projectMembers, setProjectMembers] =
   useState<ProjectMember[]>([]);
-
+const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 const [loadingMembers, setLoadingMembers] =
   useState(false);
 const projectId = String(params.projectId);
@@ -380,7 +381,21 @@ const [openFolderMenuId, setOpenFolderMenuId] =
   setDeleteFolderOpen(true);
 };
 
+useEffect(() => {
+  const loadCurrentUser = async () => {
+    try {
+      const response = await authApi.getCurrentUser();
 
+      if (response?.success && response?.data?.id) {
+        setCurrentUserId(response.data.id);
+      }
+    } catch (error) {
+      console.error("Failed to load current user:", error);
+    }
+  };
+
+  loadCurrentUser();
+}, []);
   const fetchProjectDashboard =
     useCallback(async () => {
       try {
@@ -1894,6 +1909,7 @@ useEffect(() => {
   task={selectedTask}
   open={taskModalOpen}
   projectId={projectId}
+  currentUserId={currentUserId}
   onClose={closeTaskDetails}
   onUpdated={() => {
     fetchTasks();
