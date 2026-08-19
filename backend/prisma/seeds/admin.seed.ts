@@ -11,7 +11,9 @@ export async function seedAdmin() {
   });
 
   if (!adminRole) {
-    throw new Error("Admin role not found");
+    throw new Error(
+      "Admin role not found. Please run seedRoles() first."
+    );
   }
 
   const existingAdmin = await prisma.user.findUnique({
@@ -21,11 +23,14 @@ export async function seedAdmin() {
   });
 
   if (existingAdmin) {
-    console.log("✅ Admin already exists");
+    console.log("✅ Admin user already exists");
     return;
   }
 
-  const hashedPassword = await bcrypt.hash("Admin@123", 12);
+  const hashedPassword = await bcrypt.hash(
+    "Admin@123",
+    12
+  );
 
   await prisma.user.create({
     data: {
@@ -34,6 +39,7 @@ export async function seedAdmin() {
       email: "priyanthi.ra@iphonik.com",
       password: hashedPassword,
       roleId: adminRole.id,
+      status: "ACTIVE",
     },
   });
 

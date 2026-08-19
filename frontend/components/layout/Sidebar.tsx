@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   FolderKanban,
   House,
+  LayoutDashboard,
   ListTodo,
   Settings,
   Shield,
@@ -19,30 +20,35 @@ const menus = [
     icon: House,
   },
   {
+  name: "My Overview",
+  href: "/my-work",
+  icon: LayoutDashboard,
+},
+  {
     name: "Projects",
     href: "/projects",
     icon: FolderKanban,
   },
-  {
-    name: "Tasks",
-    href: "/tasks",
-    icon: ListTodo,
-  },
+  // {
+  //   name: "Tasks",
+  //   href: "/tasks",
+  //   icon: ListTodo,
+  // },
   {
     name: "Users",
     href: "/users",
     icon: Users,
   },
   {
-    name: "Roles",
+    name: "Roles & Permissions",
     href: "/roles",
     icon: Shield,
   },
-  {
-    name: "Settings",
-    href: "/settings",
-    icon: Settings,
-  },
+  // {
+  //   name: "Settings",
+  //   href: "/settings",
+  //   icon: Settings,
+  // },
 ];
 
 export default function Sidebar() {
