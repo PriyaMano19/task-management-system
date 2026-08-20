@@ -14,11 +14,8 @@ export default function AuthInitializer() {
       dispatch(clearAuth());
     });
 
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-     
-      dispatch(initializeAuth());
-    }
+   
+    dispatch(initializeAuth());
   }, [dispatch]);
 
   return null;

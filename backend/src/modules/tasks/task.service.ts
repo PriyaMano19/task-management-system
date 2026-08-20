@@ -4,7 +4,7 @@ import {
   UpdateTaskDto,
   GetTasksQuery,
 } from "./task.types";
-
+import { notificationService } from "../notifications/notification.service";
 import { taskActivityRepository } from "../task-activities/taskActivity.repository";
 import { projectRepository } from "../projects/project.repository";
 import { projectMemberRepository } from "../projects/projectMember.repository";
@@ -115,11 +115,27 @@ class TaskService {
       }
     }
 
-    // Return complete task
-    return taskRepository.findById(
-      folderId,
-      task.id
+   const completeTask =
+  await taskRepository.findById(
+    folderId,
+    task.id
+  );
+
+if (completeTask?.assignedTo) {
+  try {
+    await notificationService.notifyTaskAssigned(
+      completeTask,
+      completeTask.assignedTo
     );
+  } catch (error) {
+    console.error(
+      "Failed to send task assignment email:",
+      error
+    );
+  }
+}
+
+return completeTask;
   }
 
 
@@ -242,14 +258,13 @@ async updateTask(
   updatedById: string,
   data: UpdateTaskDto
 ) {
-  
-  const task =
-    await this.getTaskById(
-      projectId,
-      folderId,
-      taskId,
-      updatedById
-    );
+  // Get existing task and verify project membership
+  const task = await this.getTaskById(
+    projectId,
+    folderId,
+    taskId,
+    updatedById
+  );
 
   const isReporter =
     task.createdById === updatedById;
@@ -257,7 +272,7 @@ async updateTask(
   const isAssignee =
     task.assignedToId === updatedById;
 
- 
+
   if (!isReporter && !isAssignee) {
     throw new AppError(
       "You do not have permission to update this task.",
@@ -265,18 +280,21 @@ async updateTask(
     );
   }
 
+ 
+  if (isAssignee && !isReporter) {
+    const allowedFields = [
+      "status",
+    ];
 
-  if (!isReporter && isAssignee) {
+    const receivedFields = Object.keys(data);
 
-    const allowedFields =
-      Object.keys(data);
-
-    const invalidFields =
-      allowedFields.filter(
-        (field) => field !== "status"
+    const hasUnauthorizedField =
+      receivedFields.some(
+        (field) =>
+          !allowedFields.includes(field)
       );
 
-    if (invalidFields.length > 0) {
+    if (hasUnauthorizedField) {
       throw new AppError(
         "The assignee can only change the task status.",
         403
@@ -304,9 +322,7 @@ async updateTask(
     }
   }
 
-  /*
-   * Calculate due-date activity values.
-   */
+
   const oldDueDate =
     task.dueDate
       ? task.dueDate.toISOString()
@@ -319,36 +335,43 @@ async updateTask(
         : null
       : oldDueDate;
 
-  /*
-   * Update task.
-   */
+
   const updatedTask =
     await taskRepository.update(
       task.id,
       data
     );
 
-  /*
-   * STATUS
-   */
-  if (
-    data.status !== undefined &&
-    data.status !== task.status
-  ) {
-    await taskActivityRepository.create({
-      taskId: task.id,
-      userId: updatedById,
-      action: "STATUS_CHANGED",
-      field: "status",
-      oldValue: task.status,
-      newValue: data.status,
-    });
-  }
 
-  /*
-   * PRIORITY
-   */
+if (
+  data.status !== undefined &&
+  data.status !== task.status
+) {
+
+  await taskActivityRepository.create({
+    taskId: task.id,
+    userId: updatedById,
+    action: "STATUS_CHANGED",
+    field: "status",
+    oldValue: task.status,
+    newValue: data.status,
+  });
+
+  if (updatedTask.createdBy) {
+
+    await notificationService
+      .notifyTaskStatusChanged(
+        updatedTask,
+        updatedTask.createdBy,
+        task.status,
+        data.status
+      );
+
+  }
+}
+
   if (
+    isReporter &&
     data.priority !== undefined &&
     data.priority !== task.priority
   ) {
@@ -362,10 +385,9 @@ async updateTask(
     });
   }
 
-  /*
-   * ASSIGNEE
-   */
+
   if (
+    isReporter &&
     data.assignedToId !== undefined &&
     data.assignedToId !== task.assignedToId
   ) {
@@ -381,10 +403,9 @@ async updateTask(
     });
   }
 
-  /*
-   * DUE DATE
-   */
+
   if (
+    isReporter &&
     data.dueDate !== undefined &&
     newDueDate !== oldDueDate
   ) {
@@ -400,10 +421,9 @@ async updateTask(
     });
   }
 
-  /*
-   * TITLE
-   */
+
   if (
+    isReporter &&
     data.title !== undefined &&
     data.title !== task.title
   ) {
@@ -419,6 +439,7 @@ async updateTask(
 
  
   if (
+    isReporter &&
     data.description !== undefined &&
     data.description !== task.description
   ) {
