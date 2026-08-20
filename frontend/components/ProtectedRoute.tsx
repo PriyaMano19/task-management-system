@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAppSelector } from "@/hooks/redux";
+import { usePathname, useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+
+import { RootState } from "@/store";
 
 export default function ProtectedRoute({
   children,
@@ -10,29 +12,72 @@ export default function ProtectedRoute({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
 
-  const { isAuthenticated, initialized } = useAppSelector(
-    (state) => state.auth
+  const {
+    isAuthenticated,
+    initialized,
+    loading,
+  } = useSelector(
+    (state: RootState) => state.auth
   );
 
   useEffect(() => {
-    if (initialized && !isAuthenticated) {
-      router.replace("/login");
+ 
+    if (!initialized || loading) {
+      return;
     }
-  }, [initialized, isAuthenticated, router]);
 
+  
+    if (!isAuthenticated) {
+      const redirectUrl =
+        pathname +
+        window.location.search;
 
-  if (!initialized) {
+      router.replace(
+        `/login?redirect=${encodeURIComponent(
+          redirectUrl
+        )}`
+      );
+    }
+  }, [
+    initialized,
+    loading,
+    isAuthenticated,
+    pathname,
+    router,
+  ]);
+
+  /*
+   * Authentication is still being initialized.
+   */
+  if (!initialized || loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        Loading...
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-sm text-muted-foreground">
+          Loading...
+        </div>
       </div>
     );
   }
 
+  /*
+   * Initialization finished but user is not
+   * authenticated.
+   *
+   * Don't render the dashboard while the
+   * redirect is happening.
+   */
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-sm text-muted-foreground">
+          Redirecting to login...
+        </div>
+      </div>
+    );
   }
+
 
   return <>{children}</>;
 }

@@ -31,6 +31,7 @@ const resetAuthState = (state: AuthState) => {
   state.refreshToken = null;
   state.isAuthenticated = false;
   state.loading = false;
+  state.initialized = true;
   state.error = null;
 };
 const authSlice = createSlice({

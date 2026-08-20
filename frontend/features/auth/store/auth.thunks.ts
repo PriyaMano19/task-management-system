@@ -45,10 +45,27 @@ export const initializeAuth = createAsyncThunk(
   "auth/initialize",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await authService.getCurrentUser();
+      const accessToken =
+        tokenService.getAccessToken();
+
+      const refreshToken =
+        tokenService.getRefreshToken();
+
+     
+      if (!accessToken && !refreshToken) {
+        return rejectWithValue(
+          "No active session"
+        );
+      }
+
+     
+      const response =
+        await authService.getCurrentUser();
 
       return response.data;
+
     } catch (error: any) {
+
       return rejectWithValue(
         error.response?.data?.message ??
         "Failed to initialize authentication"

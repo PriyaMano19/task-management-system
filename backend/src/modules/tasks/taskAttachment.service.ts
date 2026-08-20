@@ -183,69 +183,70 @@ if (!isReporter && !isAssignee) {
   }
 
 
-  async deleteAttachment(
-    projectId: string,
-    folderId: string,
-    taskId: string,
-    attachmentId: string,
-    userId: string
-  ) {
-    const attachment =
-      await this.getAttachment(
-        projectId,
-        folderId,
-        taskId,
-        attachmentId,
-        userId
-      );
-      const task =
-  await taskRepository.findById(
-    folderId,
-    taskId
-  );
-
-if (!task) {
-  throw new AppError(
-    "Task not found.",
-    404
-  );
-}
-
-const isReporter =
-  task.createdById === userId;
-
-const isAssignee =
-  task.assignedToId === userId;
-
-if (!isReporter && !isAssignee) {
-  throw new AppError(
-    "Only the task reporter or assignee can delete attachments.",
-    403
-  );
-}
-
-    try {
-      await fs.unlink(
-        attachment.filePath
-      );
-    } catch (error: any) {
-      if (error.code !== "ENOENT") {
-        throw error;
-      }
-    }
-
-    await taskActivityRepository.create({
+async deleteAttachment(
+  projectId: string,
+  folderId: string,
+  taskId: string,
+  attachmentId: string,
+  userId: string
+) {
+  const attachment =
+    await this.getAttachment(
+      projectId,
+      folderId,
       taskId,
-      userId,
-      action: "ATTACHMENT_DELETED",
-      field: "attachment",
-      oldValue: attachment.originalName,
-    });
+      attachmentId,
+      userId
+    );
 
-    await taskAttachmentRepository.delete(
-      attachment.id
+  const task =
+    await taskRepository.findById(
+      folderId,
+      taskId
+    );
+
+  if (!task) {
+    throw new AppError(
+      "Task not found.",
+      404
     );
   }
+
+  const isReporter =
+    task.createdById === userId;
+
+  const isAssignee =
+    task.assignedToId === userId;
+
+  if (!isReporter && !isAssignee) {
+    throw new AppError(
+      "Only the task reporter or assignee can delete attachments.",
+      403
+    );
+  }
+
+  try {
+    await fs.unlink(
+      attachment.filePath
+    );
+  } catch (error: any) {
+    if (error.code !== "ENOENT") {
+      throw error;
+    }
+  }
+
+  await taskActivityRepository.create({
+    taskId,
+    userId,
+    action: "ATTACHMENT_DELETED",
+    field: "attachment",
+    oldValue: attachment.originalName,
+  });
+
+  await taskAttachmentRepository.delete(
+    attachment.id
+  );
+}
 }
 
 export const taskAttachmentService =

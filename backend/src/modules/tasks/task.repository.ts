@@ -150,11 +150,18 @@ class TaskRepository {
       },
 
       include: {
-        folder: {
+       folder: {
           select: {
             id: true,
             name: true,
             projectId: true,
+
+            project: {
+              select: {
+                id: true,
+                projectName: true,
+              },
+            },
           },
         },
 
@@ -211,27 +218,42 @@ async update(
           : undefined,
     },
 
-    include: {
-      assignedTo: {
+   include: {
+  folder: {
+    select: {
+      id: true,
+      name: true,
+      projectId: true,
+
+      project: {
         select: {
           id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
+          projectName: true,
         },
       },
-
-      createdBy: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-        },
-      },
-
-      attachments: true,
     },
+  },
+
+  assignedTo: {
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+    },
+  },
+
+  createdBy: {
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+    },
+  },
+
+  attachments: true,
+},
   });
 }
 

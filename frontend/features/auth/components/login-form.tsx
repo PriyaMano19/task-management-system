@@ -30,13 +30,23 @@ export default function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
- const onSubmit = async (data: LoginFormData) => {
+const onSubmit = async (data: LoginFormData) => {
   const result = await dispatch(login(data));
 
   if (login.fulfilled.match(result)) {
     toast.success("Login successful.");
 
-    router.push("/dashboard");
+    const searchParams = new URLSearchParams(
+      window.location.search
+    );
+
+    const redirect = searchParams.get("redirect");
+
+    if (redirect && redirect.startsWith("/")) {
+      router.push(redirect);
+    } else {
+      router.push("/dashboard");
+    }
   } else {
     toast.error(result.payload as string);
   }
