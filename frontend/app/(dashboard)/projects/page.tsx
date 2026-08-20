@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/services/api";
+import ConfirmationModal from "@/components/common/ConfirmationModal";
 import ProjectMembersModal from "@/components/project-members/ProjectMembersModal";
 import {
   Folder,
@@ -199,7 +200,11 @@ const [selectedProjectForMembers, setSelectedProjectForMembers] =
   const [deletingId, setDeletingId] =
     useState<string | null>(null);
 
+const [deleteProject, setDeleteProject] =
+  useState<Project | null>(null);
 
+const [actionError, setActionError] =
+  useState<string | null>(null);
   
 
   const fetchProjects = useCallback(
@@ -468,13 +473,13 @@ const [selectedProjectForMembers, setSelectedProjectForMembers] =
 
     } catch (err) {
 
-      alert(
+      setActionError(
         err instanceof Error
           ? err.message
           : "Failed to save project."
       );
 
-    } finally {
+    }finally {
 
       setSaving(false);
     }
@@ -483,66 +488,49 @@ const [selectedProjectForMembers, setSelectedProjectForMembers] =
 
  
 
-  const handleDelete = async (
-    project: Project
-  ) => {
+const handleDelete = async (
+  project: Project
+) => {
 
-    setMenuId(null);
+  setMenuId(null);
 
+  try {
 
-    const confirmed =
-      window.confirm(
-        `Are you sure you want to delete "${project.projectName}"?`
+    setDeletingId(project.id);
+
+    const response =
+      await api.delete(
+        `/projects/${project.id}`
       );
 
+    const result =
+      response.data;
 
-    if (!confirmed) {
-      return;
+    if (!result.success) {
+
+      throw new Error(
+        result.message ||
+          "Failed to delete project."
+      );
     }
 
+    setDeleteProject(null);
 
-    try {
+    await fetchProjects();
 
-      setDeletingId(
-        project.id
-      );
+  } catch (err) {
 
+    setActionError(
+      err instanceof Error
+        ? err.message
+        : "Failed to delete project."
+    );
 
-      const response =
-        await api.delete(
-          `/projects/${project.id}`
-        );
+  } finally {
 
-
-      const result =
-        response.data;
-
-
-      if (!result.success) {
-
-        throw new Error(
-          result.message ||
-            "Failed to delete project."
-        );
-      }
-
-
-      await fetchProjects();
-
-    } catch (err) {
-
-      alert(
-        err instanceof Error
-          ? err.message
-          : "Failed to delete project."
-      );
-
-    } finally {
-
-      setDeletingId(null);
-    }
-  };
-
+    setDeletingId(null);
+  }
+};
 const openMembersModal = (project: Project) => {
   setMenuId(null);
   setSelectedProjectForMembers(project);
@@ -877,20 +865,23 @@ const closeMembersModal = () => {
                         </button>
 
                         {/* Delete */}
-                        <button
-                          onClick={() =>
-                            handleDelete(project)
-                          }
-                          disabled={
-                            deletingId === project.id
-                          }
-                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-500/10 dark:text-red-400"
+                       <button
+                          onClick={() => {
+                            setMenuId(null);
+                            setDeleteProject(project);
+                          }}
+                          disabled={deletingId === project.id}
+                          className="
+                            flex w-full items-center gap-2
+                            rounded-lg px-3 py-2
+                            text-sm text-red-600
+                            hover:bg-red-500/10
+                            dark:text-red-400
+                          "
                         >
                           <Trash2 className="h-4 w-4" />
 
-                          {deletingId === project.id
-                            ? "Deleting..."
-                            : "Delete"}
+                          Delete
                         </button>
 
                       </div>
@@ -1333,6 +1324,50 @@ const closeMembersModal = () => {
         </div>
 
       )}
+      <ConfirmationModal
+  open={!!deleteProject}
+  title="Delete Project"
+  message={
+    deleteProject
+      ? `Are you sure you want to delete "${deleteProject.projectName}"? This action cannot be undone.`
+      : ""
+  }
+  confirmText="Delete Project"
+  cancelText="Cancel"
+  variant="danger"
+  loading={
+    deleteProject
+      ? deletingId === deleteProject.id
+      : false
+  }
+  onCancel={() => {
+    if (!deletingId) {
+      setDeleteProject(null);
+    }
+  }}
+  onConfirm={() => {
+    if (deleteProject) {
+      handleDelete(deleteProject);
+    }
+  }}
+/>
+<ConfirmationModal
+  open={!!actionError}
+  title="Something went wrong"
+  message={
+    actionError ||
+    "An unexpected error occurred."
+  }
+  confirmText="OK"
+  cancelText={null}
+  variant="primary"
+  onCancel={() => {
+    setActionError(null);
+  }}
+  onConfirm={() => {
+    setActionError(null);
+  }}
+/>
 <ProjectMembersModal
   projectId={
     selectedProjectForMembers?.id ?? ""
