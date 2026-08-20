@@ -1,0 +1,23 @@
+INSERT INTO `tbl_levelone` (`id`, `name`, `description`, `status`, `com_id`) VALUES
+(1,	'Cards',	'Cards',	1,	1),
+(2,	'CARD CENTRE',	'CARD CENTRE',	1,	1),
+(5,	'IT',	'IT',	1,	3),
+(6,	'CC- New Business',	'CC- New Business',	1,	2),
+(7,	'CC - PHS',	'CC - PHS',	1,	2),
+(8,	'CC - Claims -Structred',	'CC - Claims -Structred',	1,	2),
+(9,	'CC - Claims -Unstructred',	'CC - Claims -Unstructred',	1,	2),
+(10,	'CC - Banca',	'CC - Banca',	1,	2),
+(11,	'CC - Sales',	'CC - Sales',	1,	2),
+(12,	'CC - Digital',	'CC - Digital',	1,	2),
+(13,	'CC - Corporate',	'CC - Corporate',	1,	2),
+(14,	'CC - Marketing',	'CC - Marketing',	1,	2),
+(15,	'CC - Common',	'CC - Common',	1,	2),
+(16,	'TSU - New busniess',	'TSU - New busniess',	1,	2),
+(17,	'TSU - PHS',	'TSU - PHS',	1,	2),
+(18,	'TSU - Claims',	'TSU - Claims',	1,	2),
+(19,	'CMU',	'CMU',	1,	2),
+(20,	'SFA',	'SFA',	1,	2),
+(21,	'Legal',	'Legal',	1,	2),
+(23,	'iphonik',	'iphonik test',	0,	2),
+(24,	'CRU',	'CRU',	1,	1);
+-- 2026-08-04 08:38:59 UTC

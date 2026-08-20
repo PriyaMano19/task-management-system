@@ -12,6 +12,7 @@ import {
   getTaskAttachments,
   downloadTaskAttachment,
   deleteTaskAttachment,
+  uploadTaskAttachment,
 } from "./task.controller";
 
 import {
@@ -53,7 +54,12 @@ router.delete(
   authenticate,
   deleteTask
 );
-
+router.post(
+  "/:projectId/folders/:folderId/tasks/:taskId/attachments",
+  authenticate,
+  upload.single("attachment"),
+  uploadTaskAttachment
+);
 router.get(
   "/:projectId/folders/:folderId/tasks/:taskId/attachments",
   authenticate,

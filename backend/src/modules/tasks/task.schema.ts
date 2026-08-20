@@ -8,29 +8,33 @@ export const createTaskSchema = z.object({
     .min(2, "Task title must be at least 2 characters")
     .max(200),
 
-  description: z
-    .string()
-    .trim()
-    .optional(),
+description: z
+  .string()
+  .trim()
+  .nullable()
+  .optional(),
 
   priority: z
     .nativeEnum(TaskPriority)
     .optional(),
 
-  assignedToId: z
-    .string()
-    .uuid("Invalid user ID")
-    .optional(),
+assignedToId: z
+  .string()
+  .uuid("Invalid user ID")
+  .nullable()
+  .optional(),
 
-  dueDate: z
-    .string()
-    .optional()
-    .refine(
-      (value) => !value || !isNaN(Date.parse(value)),
-      {
-        message: "Invalid due date",
-      }
-    ),
+ dueDate: z
+  .string()
+  .nullable()
+  .optional()
+  .refine(
+    (value) =>
+      !value || !isNaN(Date.parse(value)),
+    {
+      message: "Invalid due date",
+    }
+  ),
 });
 
 export const updateTaskSchema = z.object({
@@ -41,10 +45,11 @@ export const updateTaskSchema = z.object({
     .max(200)
     .optional(),
 
-  description: z
-    .string()
-    .trim()
-    .optional(),
+description: z
+  .string()
+  .trim()
+  .nullable()
+  .optional(),
 
   status: z
     .nativeEnum(TaskStatus)
@@ -54,13 +59,15 @@ export const updateTaskSchema = z.object({
     .nativeEnum(TaskPriority)
     .optional(),
 
-  assignedToId: z
-    .string()
-    .uuid("Invalid user ID")
-    .optional(),
+assignedToId: z
+  .string()
+  .uuid("Invalid user ID")
+  .nullable()
+  .optional(),
 
   dueDate: z
     .string()
+    .nullable()
     .optional()
     .refine(
       (value) => !value || !isNaN(Date.parse(value)),

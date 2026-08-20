@@ -45,7 +45,50 @@ export const createTask = async (
     next(error);
   }
 };
+export const uploadTaskAttachment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
 
+    const projectId = getParam(req.params.projectId);
+    const folderId = getParam(req.params.folderId);
+    const taskId = getParam(req.params.taskId);
+
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        message: "Attachment file is required.",
+      });
+    }
+
+    const attachment =
+      await taskAttachmentService.uploadAttachment(
+        projectId,
+        folderId,
+        taskId,
+        file,
+        req.user.id
+      );
+
+    return res.status(201).json({
+      success: true,
+      message: "Task attachment uploaded successfully.",
+      data: attachment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 
 export const getTasks = async (
@@ -241,12 +284,13 @@ export const getTaskAttachments = async (
     const taskId =
       getParam(req.params.taskId);
 
-    const attachments =
-      await taskAttachmentService.getAttachments(
-        projectId,
-        folderId,
-        taskId
-      );
+   const attachments =
+  await taskAttachmentService.getAttachments(
+    projectId,
+    folderId,
+    taskId,
+    req.user.id
+  );
 
     return res.status(200).json({
       success: true,
@@ -288,13 +332,14 @@ export const downloadTaskAttachment = async (
     const attachmentId =
       getParam(req.params.attachmentId);
 
-    const attachment =
-      await taskAttachmentService.getAttachment(
-        projectId,
-        folderId,
-        taskId,
-        attachmentId
-      );
+   const attachment =
+  await taskAttachmentService.getAttachment(
+    projectId,
+    folderId,
+    taskId,
+    attachmentId,
+    req.user.id
+  );
 
     return res.download(
       attachment.filePath,

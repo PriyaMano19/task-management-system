@@ -22,9 +22,9 @@ class TaskRepository {
         priority: data.priority,
         assignedToId: data.assignedToId,
 
-        dueDate: data.dueDate
-          ? new Date(data.dueDate)
-          : undefined,
+       dueDate: data.dueDate
+        ? new Date(data.dueDate)
+        : null,
       },
 
       include: {
@@ -191,37 +191,49 @@ class TaskRepository {
     });
   }
 
-  async update(
-    taskId: string,
-    data: UpdateTaskDto
-  ) {
-    return prisma.task.update({
-      where: {
-        id: taskId,
-      },
+async update(
+  taskId: string,
+  data: UpdateTaskDto
+) {
+  return prisma.task.update({
+    where: {
+      id: taskId,
+    },
 
-      data: {
-        ...data,
+    data: {
+      ...data,
 
-        dueDate: data.dueDate
-          ? new Date(data.dueDate)
+      dueDate:
+        data.dueDate !== undefined
+          ? data.dueDate
+            ? new Date(data.dueDate)
+            : null
           : undefined,
-      },
+    },
 
-      include: {
-        assignedTo: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
+    include: {
+      assignedTo: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
         },
-
-        attachments: true,
       },
-    });
-  }
+
+      createdBy: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+
+      attachments: true,
+    },
+  });
+}
 
   async delete(taskId: string) {
     return prisma.task.delete({
