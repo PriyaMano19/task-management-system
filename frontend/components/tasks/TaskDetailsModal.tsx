@@ -1,5 +1,4 @@
 "use client";
-
 import {
   CalendarDays,
   MessageCircle,
@@ -8,8 +7,15 @@ import {
   User,
   X,
   Upload,
+  Download,
+  Trash2,
+  Loader2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  ChangeEvent,
+  useEffect,
+  useState,
+} from "react";
 import api from "@/services/api";
 
 type TaskStatus =
@@ -249,6 +255,18 @@ export default function TaskDetailsModal({
 
   const [saving, setSaving] =
     useState(false);
+    const [attachmentUploading, setAttachmentUploading] =
+  useState(false);
+
+const [attachmentDeletingId, setAttachmentDeletingId] =
+  useState<string | null>(null);
+
+ 
+  const [attachments, setAttachments] =
+    useState<TaskAttachment[]>([]);
+
+  const [attachmentToDelete, setAttachmentToDelete] =
+    useState<TaskAttachment | null>(null);
 
   const [error, setError] =
     useState<string | null>(null);
@@ -270,7 +288,8 @@ export default function TaskDetailsModal({
 
   const [editingCommentText, setEditingCommentText] =
     useState("");
-
+  const [showDeleteTaskConfirmation, setShowDeleteTaskConfirmation] =
+  useState(false);
   /*
    * ============================================================
    * USER PERMISSIONS
@@ -312,12 +331,9 @@ export default function TaskDetailsModal({
   const canUploadAttachment =
     isReporter || isAssignee;
 
-  /*
-   * ============================================================
-   * LOAD COMMENTS
-   * ============================================================
-   */
-
+  const canDeleteTask =
+  isReporter;
+  
   useEffect(() => {
     if (!open || !task) {
       return;
@@ -349,12 +365,38 @@ export default function TaskDetailsModal({
     loadComments();
   }, [open, task, projectId]);
 
-  /*
-   * ============================================================
-   * ADD COMMENT
-   * ============================================================
-   */
+  const handleDeleteTask = async () => {
+  if (!task || !canDeleteTask) {
+    return;
+  }
 
+  try {
+    setSaving(true);
+    setError(null);
+
+    await api.delete(
+      `/projects/${projectId}/folders/${task.folderId}/tasks/${task.id}`
+    );
+
+    onUpdated();
+    onClose();
+
+  } catch (error) {
+    console.error(
+      "Failed to delete task:",
+      error
+    );
+
+    setError(
+      getApiErrorMessage(
+        error,
+        "Failed to delete task."
+      )
+    );
+  } finally {
+    setSaving(false);
+  }
+};
   const handleAddComment = async () => {
     const content =
       newComment.trim();
@@ -402,11 +444,7 @@ export default function TaskDetailsModal({
     }
   };
 
-  /*
-   * ============================================================
-   * UPDATE OWN COMMENT ONLY
-   * ============================================================
-   */
+ 
 
   const handleUpdateComment = async (
     commentId: string
@@ -426,9 +464,7 @@ export default function TaskDetailsModal({
       return;
     }
 
-    // Security/UI check:
-    // Only the person who created the comment
-    // can edit it.
+   
     if (comment.userId !== currentUserId) {
       setError(
         "You can only edit your own comments."
@@ -476,11 +512,7 @@ export default function TaskDetailsModal({
     }
   };
 
-  /*
-   * ============================================================
-   * DELETE OWN COMMENT ONLY
-   * ============================================================
-   */
+
 
   const handleDeleteComment = async (
     commentId: string
@@ -533,11 +565,7 @@ export default function TaskDetailsModal({
     }
   };
 
-  /*
-   * ============================================================
-   * INITIALIZE TASK DATA
-   * ============================================================
-   */
+
 
   useEffect(() => {
     if (!task || !open) {
@@ -564,19 +592,19 @@ export default function TaskDetailsModal({
         : ""
     );
 
+   
+    setAttachments([]);
+    setAttachmentToDelete(null);
+    setAttachmentDeletingId(null);
+
     setError(null);
 
     setEditingCommentId(null);
     setEditingCommentText("");
     setNewComment("");
-  }, [task, open]);
+  }, [open, task?.id]);
 
-  /*
-   * ============================================================
-   * LOAD PROJECT MEMBERS
-   * ============================================================
-   */
-
+ 
   useEffect(() => {
     if (!open || !projectId) {
       return;
@@ -608,111 +636,232 @@ export default function TaskDetailsModal({
     loadMembers();
   }, [open, projectId]);
 
-  /*
-   * ============================================================
-   * SAVE TASK
-   * ============================================================
-   */
+  
 
-  const handleSave = async () => {
+  const refreshAttachments = async () => {
     if (!task) {
       return;
     }
 
     try {
-      setSaving(true);
-      setError(null);
-
-      const payload: Record<
-        string,
-        unknown
-      > = {};
-
-      /*
-       * Reporter can edit:
-       * title
-       * description
-       * priority
-       * assigned user
-       * due date
-       */
-      if (canEditTaskDetails) {
-        payload.title =
-          title.trim();
-
-        payload.description =
-          description.trim() || null;
-
-        payload.priority =
-          priority;
-
-        payload.assignedToId =
-          assignedToId || null;
-
-        payload.dueDate =
-          dueDate
-            ? new Date(
-                `${dueDate}T00:00:00`
-              ).toISOString()
-            : null;
-      }
-
-      /*
-       * Reporter + Assignee can change status.
-       */
-      if (canChangeStatus) {
-        payload.status = status;
-      }
-
-      if (
-        Object.keys(payload).length ===
-        0
-      ) {
-        return;
-      }
-
-      await api.put(
-        `/projects/${projectId}/folders/${task.folderId}/tasks/${task.id}`,
-        payload
+      const response = await api.get(
+        `/projects/${projectId}/folders/${task.folderId}/tasks/${task.id}/attachments`,
+        {
+         
+          params: {
+            _t: Date.now(),
+          },
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        }
       );
 
-      onUpdated();
+      setAttachments(response.data?.data ?? []);
     } catch (error) {
-      console.error(
-        "Failed to update task:",
-        error
-      );
-
-      setError(
-        getApiErrorMessage(
-          error,
-          "Failed to update task."
-        )
-      );
-    } finally {
-      setSaving(false);
+      console.error("Failed to refresh attachments:", error);
+      throw error;
     }
   };
 
-  /*
-   * ============================================================
-   * ATTACHMENT UPLOAD
-   * ============================================================
-   *
-   * The current backend you provided does not yet expose
-   * an upload-existing-task-attachment endpoint.
-   *
-   * Therefore this function intentionally does not call
-   * a guessed endpoint.
-   *
-   * Once the backend upload API is created, connect it here.
-   */
+ 
+  useEffect(() => {
+    if (!open || !task) {
+      return;
+    }
 
-  const handleAttachmentUpload = () => {
-    setError(
-      "Attachment upload API is not available yet."
+    refreshAttachments().catch((error) => {
+      setError(
+        getApiErrorMessage(
+          error,
+          "Failed to load attachments."
+        )
+      );
+    });
+  }, [open, task?.id, projectId]);
+
+ 
+
+const handleSave = async () => {
+    if (!task) {
+        return;
+    }
+
+    try {
+        setSaving(true);
+        setError(null);
+
+        const payload: Record<string, unknown> = {};
+
+      
+        if (canEditTaskDetails) {
+            payload.title = title.trim();
+
+            payload.description =
+                description.trim() || null;
+
+            payload.priority = priority;
+
+            payload.assignedToId =
+                assignedToId || null;
+
+           
+           payload.dueDate = dueDate
+              ? new Date(
+                  `${dueDate}T00:00:00`
+                ).toISOString()
+              : null;
+        }
+
+       
+        if (canChangeStatus) {
+            payload.status = status;
+        }
+
+        if (Object.keys(payload).length === 0) {
+            return;
+        }
+
+        await api.put(
+            `/projects/${projectId}/folders/${task.folderId}/tasks/${task.id}`,
+            payload
+        );
+
+        onUpdated();
+        onClose();
+
+    } catch (error) {
+        console.error(
+            "Failed to update task:",
+            error
+        );
+
+        setError(
+            getApiErrorMessage(
+                error,
+                "Failed to update task."
+            )
+        );
+    } finally {
+        setSaving(false);
+    }
+};
+
+const handleAttachmentUpload = async (
+  event: ChangeEvent<HTMLInputElement>
+) => {
+  const file = event.target.files?.[0];
+
+  if (!file || !task) {
+    event.target.value = "";
+    return;
+  }
+
+  try {
+    setAttachmentUploading(true);
+    setError(null);
+
+    const formData = new FormData();
+
+    formData.append(
+      "attachment",
+      file
     );
-  };
+
+  await api.post(
+  `/projects/${projectId}/folders/${task.folderId}/tasks/${task.id}/attachments`,
+  formData,
+  {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  }
+);
+   
+
+    await refreshAttachments();
+
+  } catch (error) {
+    console.error(
+      "Failed to upload attachment:",
+      error
+    );
+
+    setError(
+      getApiErrorMessage(
+        error,
+        "Failed to upload attachment."
+      )
+    );
+  } finally {
+    setAttachmentUploading(false);
+
+    // Allow selecting same file again
+    event.target.value = "";
+  }
+};
+const handleDeleteAttachment = async (
+  attachmentId: string
+) => {
+  if (!task) {
+    return;
+  }
+
+  try {
+    setAttachmentDeletingId(attachmentId);
+    setError(null);
+
+    await api.delete(
+      `/projects/${projectId}/folders/${task.folderId}/tasks/${task.id}/attachments/${attachmentId}`
+    );
+
+    // Remove it immediately from the currently open modal.
+    setAttachments((current) =>
+      current.filter(
+        (item) => item.id !== attachmentId
+      )
+    );
+
+    // Re-fetch from the backend so the modal is guaranteed to
+    // show the actual persisted attachment state.
+    await refreshAttachments();
+
+    // Keep this change local to the modal. The parent task is updated only
+    // when the user explicitly clicks Save Changes.
+    setAttachmentToDelete(null);
+  } catch (error) {
+    console.error(
+      "Failed to delete attachment:",
+      error
+    );
+
+    setError(
+      getApiErrorMessage(
+        error,
+        "Failed to delete attachment."
+      )
+    );
+  } finally {
+    setAttachmentDeletingId(null);
+  }
+};
+
+const openDeleteAttachmentConfirmation = (
+  attachmentId: string
+) => {
+  const attachment =
+    attachments.find(
+      (item) => item.id === attachmentId
+    );
+
+  if (!attachment) {
+    return;
+  }
+
+  setError(null);
+  setAttachmentToDelete(attachment);
+};
 
   if (!open || !task) {
     return null;
@@ -732,9 +881,7 @@ export default function TaskDetailsModal({
     >
       <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
 
-        {/* =====================================================
-            HEADER
-        ===================================================== */}
+     
 
         <div className="flex items-start justify-between border-b border-border px-6 py-5">
           <div>
@@ -778,10 +925,7 @@ export default function TaskDetailsModal({
           </button>
         </div>
 
-        {/* =====================================================
-            BODY
-        ===================================================== */}
-
+       
         <div className="flex-1 overflow-y-auto p-6">
           <div className="space-y-5">
 
@@ -793,10 +937,7 @@ export default function TaskDetailsModal({
               </div>
             )}
 
-            {/* =================================================
-                TITLE
-            ================================================= */}
-
+          
             <div>
               <label className="mb-2 block text-sm font-medium text-card-foreground">
                 Task Title
@@ -849,9 +990,7 @@ export default function TaskDetailsModal({
               />
             </div>
 
-            {/* =================================================
-                STATUS + PRIORITY
-            ================================================= */}
+           
 
             <div className="grid gap-4 sm:grid-cols-2">
 
@@ -941,9 +1080,7 @@ export default function TaskDetailsModal({
               </div>
             </div>
 
-            {/* =================================================
-                ASSIGNEE + DUE DATE
-            ================================================= */}
+        
 
             <div className="grid gap-4 sm:grid-cols-2">
 
@@ -1033,9 +1170,6 @@ export default function TaskDetailsModal({
               </div>
             </div>
 
-            {/* =================================================
-                REPORTER
-            ================================================= */}
 
             <section>
               <div className="rounded-xl border border-border bg-muted/20 p-4">
@@ -1069,113 +1203,190 @@ export default function TaskDetailsModal({
               </div>
             </section>
 
-            {/* =================================================
-                ATTACHMENTS
-            ================================================= */}
+        
 
-            <section>
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-card-foreground">
-                    Attachments
-                  </h3>
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-card-foreground">
+                  Attachments
+                </h3>
 
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {task.attachments
-                      ?.length ?? 0}{" "}
-                    file
-                    {(task.attachments
-                      ?.length ?? 0) !==
-                    1
-                      ? "s"
-                      : ""}
-                  </p>
-                </div>
-
-                {canUploadAttachment && (
-                  <button
-                    type="button"
-                    onClick={
-                      handleAttachmentUpload
-                    }
-                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition hover:opacity-90"
-                  >
-                    <Upload className="h-3.5 w-3.5" />
-                    Add Attachment
-                  </button>
-                )}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {attachments.length}{" "}
+                  file
+                  {attachments.length !== 1
+                    ? "s"
+                    : ""}
+                </p>
               </div>
 
-              {task.attachments &&
-              task.attachments.length >
-                0 ? (
-                <div className="space-y-2">
-                  {task.attachments.map(
-                    (attachment) => (
-                      <div
-                        key={
-                          attachment.id
-                        }
-                        className="flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/20 p-4"
-                      >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                            <Paperclip className="h-4 w-4" />
-                          </div>
+              {canUploadAttachment && (
+                <label
+                  className={`inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition ${
+                    attachmentUploading
+                      ? "cursor-not-allowed opacity-60"
+                      : "cursor-pointer hover:opacity-90"
+                  }`}
+                >
+                  {attachmentUploading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Upload className="h-3.5 w-3.5" />
+                  )}
 
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-card-foreground">
-                              {
-                                attachment.originalName
-                              }
-                            </p>
+                  {attachmentUploading
+                    ? "Uploading..."
+                    : "Add Attachment"}
 
-                            <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
-                              <span>
-                                {formatFileSize(
-                                  attachment.fileSize
-                                )}
-                              </span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    disabled={attachmentUploading}
+                    onChange={
+                      handleAttachmentUpload
+                    }
+                  />
+                </label>
+              )}
+            </div>
 
-                              <span>
-                                •
-                              </span>
-
-                              <span>
-                                {attachment.uploadedBy
-                                  ? `Uploaded by ${attachment.uploadedBy.firstName} ${attachment.uploadedBy.lastName}`
-                                  : "Uploaded"}
-                              </span>
-                            </div>
-                          </div>
+            {attachments.length > 0 ? (
+              <div className="space-y-2">
+                {attachments.map(
+                  (attachment) => (
+                    <div
+                      key={attachment.id}
+                      className="flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/20 p-4"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <Paperclip className="h-4 w-4" />
                         </div>
 
-                        <a
-                          href={`${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/folders/${task.folderId}/tasks/${task.id}/attachments/${attachment.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="shrink-0 rounded-lg border border-border px-3 py-2 text-xs font-medium text-card-foreground transition hover:bg-muted"
-                        >
-                          Download
-                        </a>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-card-foreground">
+                            {attachment.originalName}
+                          </p>
+
+                          <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
+                            <span>
+                              {formatFileSize(
+                                attachment.fileSize
+                              )}
+                            </span>
+
+                            <span>•</span>
+
+                            <span>
+                              {attachment.uploadedBy
+                                ? `Uploaded by ${attachment.uploadedBy.firstName} ${attachment.uploadedBy.lastName}`
+                                : "Uploaded"}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    )
-                  )}
-                </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-border p-6 text-center">
-                  <Paperclip className="mx-auto h-5 w-5 text-muted-foreground" />
 
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    No attachments
-                  </p>
-                </div>
-              )}
-            </section>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {/* DOWNLOAD */}
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const response =
+                                await api.get(
+                                  `/projects/${projectId}/folders/${task.folderId}/tasks/${task.id}/attachments/${attachment.id}`,
+                                  {
+                                    responseType:
+                                      "blob",
+                                  }
+                                );
 
-            {/* =================================================
-                COMMENTS
-            ================================================= */}
+                              const blobUrl =
+                                window.URL.createObjectURL(
+                                  new Blob([
+                                    response.data,
+                                  ])
+                                );
+
+                              const link =
+                                document.createElement(
+                                  "a"
+                                );
+
+                              link.href = blobUrl;
+
+                              link.download =
+                                attachment.originalName;
+
+                              document.body.appendChild(
+                                link
+                              );
+
+                              link.click();
+
+                              link.remove();
+
+                              window.URL.revokeObjectURL(
+                                blobUrl
+                              );
+                            } catch (error) {
+                              console.error(
+                                "Failed to download attachment:",
+                                error
+                              );
+
+                              setError(
+                                getApiErrorMessage(
+                                  error,
+                                  "Failed to download attachment."
+                                )
+                              );
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-card-foreground transition hover:bg-muted"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                         
+                        </button>
+
+                       {/* DELETE - REPORTER OR ASSIGNEE ONLY */}
+                            {canUploadAttachment && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openDeleteAttachmentConfirmation(
+                                    attachment.id
+                                  )
+                                }
+                                disabled={
+                                  attachmentDeletingId === attachment.id
+                                }
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/30"
+                              >
+                                {attachmentDeletingId === attachment.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                )}
+                              </button>
+                            )}
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-border p-6 text-center">
+                <Paperclip className="mx-auto h-5 w-5 text-muted-foreground" />
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  No attachments
+                </p>
+              </div>
+            )}
+          </section>
+           
 
             <section>
               <div className="mb-4">
@@ -1397,9 +1608,7 @@ export default function TaskDetailsModal({
               </div>
             </section>
 
-            {/* =================================================
-                CURRENT INFO
-            ================================================= */}
+           
 
             <div className="rounded-xl bg-muted/40 p-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -1431,35 +1640,220 @@ export default function TaskDetailsModal({
           </div>
         </div>
 
-        {/* =====================================================
-            FOOTER
-        ===================================================== */}
+       
 
-        <div className="flex items-center justify-end gap-3 border-t border-border px-6 py-4">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-card-foreground transition hover:bg-muted disabled:opacity-50"
-          >
-            Close
-          </button>
+       <div className="flex items-center justify-end gap-3 border-t border-border px-6 py-4">
 
-          {(canEditTaskDetails ||
-            canChangeStatus) && (
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving
-                ? "Saving..."
-                : "Save Changes"}
-            </button>
-          )}
-        </div>
+              {/* DELETE TASK - REPORTER ONLY */}
+              {canDeleteTask && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowDeleteTaskConfirmation(true)
+                  }
+                  disabled={saving}
+                  className="mr-auto inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/30"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete Task
+                </button>
+              )}
+
+              {/* CLOSE */}
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={saving}
+                className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-card-foreground transition hover:bg-muted disabled:opacity-50"
+              >
+                Close
+              </button>
+
+              {/* SAVE */}
+              {(canEditTaskDetails || canChangeStatus) && (
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+              )}
+
+            </div>
       </div>
+
+     
+
+      {attachmentToDelete && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              if (!attachmentDeletingId) {
+                setAttachmentToDelete(null);
+              }
+            }
+          }}
+        >
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
+                <Trash2 className="h-5 w-5" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base font-semibold text-card-foreground">
+                  Delete Attachment
+                </h3>
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <span className="font-medium text-card-foreground">
+                    "{attachmentToDelete.originalName}"
+                  </span>
+                  ? This action cannot be undone.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!attachmentDeletingId) {
+                    setAttachmentToDelete(null);
+                  }
+                }}
+                disabled={!!attachmentDeletingId}
+                className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setAttachmentToDelete(null)}
+                disabled={!!attachmentDeletingId}
+                className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-card-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleDeleteAttachment(
+                    attachmentToDelete.id
+                  )
+                }
+                disabled={
+                  attachmentDeletingId ===
+                  attachmentToDelete.id
+                }
+                className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {attachmentDeletingId ===
+                attachmentToDelete.id ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* DELETE TASK CONFIRMATION */}
+{showDeleteTaskConfirmation && (
+  <div
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+    onMouseDown={(event) => {
+      if (event.target === event.currentTarget) {
+        if (!saving) {
+          setShowDeleteTaskConfirmation(false);
+        }
+      }
+    }}
+  >
+    <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+
+      <div className="flex items-start gap-4">
+
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
+          <Trash2 className="h-5 w-5" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+
+          <h3 className="text-base font-semibold text-card-foreground">
+            Delete Task
+          </h3>
+
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Are you sure you want to delete this task?
+            This action cannot be undone.
+          </p>
+
+        </div>
+
+        <button
+          type="button"
+          onClick={() =>
+            setShowDeleteTaskConfirmation(false)
+          }
+          disabled={saving}
+          className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+      </div>
+
+      <div className="mt-6 flex justify-end gap-3">
+
+        <button
+          type="button"
+          onClick={() =>
+            setShowDeleteTaskConfirmation(false)
+          }
+          disabled={saving}
+          className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-card-foreground transition hover:bg-muted disabled:opacity-50"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={handleDeleteTask}
+          disabled={saving}
+          className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Deleting...
+            </>
+          ) : (
+            <>
+              <Trash2 className="h-4 w-4" />
+              Delete Task
+            </>
+          )}
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+)}
     </div>
   );
 }
