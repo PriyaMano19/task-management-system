@@ -132,7 +132,7 @@ const jiraTemplate = (
     >
 
       <p style="margin:0 0 8px 0;">
-        This email was sent by the Task Management System.
+        This email was sent by Iphonik Pvt Ltd.
       </p>
 
       <p style="margin:0;">
@@ -401,7 +401,7 @@ export const assignmentEmail = (
                   font-size:24px;
                 "
               >
-                Task Management System
+                Iphonik Pvt Ltd
               </h1>
 
             </td>
@@ -638,7 +638,7 @@ export const assignmentEmail = (
                 "
               >
                 This email was sent by the
-                Task Management System.
+                Iphonik Pvt Ltd.
               </p>
 
               <p
