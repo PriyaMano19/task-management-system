@@ -1089,11 +1089,11 @@ useEffect(() => {
 
                   {/* DESCRIPTION */}
 
-                  {task.description && (
+                  {/* {task.description && (
                     <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
                       {task.description}
                     </p>
-                  )}
+                  )} */}
 
                   {/* PRIORITY */}
 
@@ -1154,7 +1154,7 @@ useEffect(() => {
 
                     {/* REPORTER */}
 
-                    {task.createdBy && (
+                    {/* {task.createdBy && (
                       <div
                         className="flex items-center gap-1.5"
                         title={`Reported by ${task.createdBy.firstName} ${task.createdBy.lastName}`}
@@ -1170,7 +1170,7 @@ useEffect(() => {
                           {task.createdBy.firstName}
                         </span>
                       </div>
-                    )}
+                    )} */}
 
                     {/* ATTACHMENTS */}
 
@@ -1578,10 +1578,7 @@ useEffect(() => {
 
         </aside>
 
-        {/* ======================================================
-            KANBAN
-        ====================================================== */}
-
+   
         <main className="min-w-0 flex-1 overflow-auto">
 
           {/* KANBAN HEADER */}

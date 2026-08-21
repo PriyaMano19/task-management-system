@@ -24,10 +24,7 @@ export async function seedRoles() {
       name: "QA Engineer",
       description: "Quality Assurance Engineer",
     },
-    {
-      name: "Viewer",
-      description: "Read Only User",
-    },
+   
   ];
 
   for (const role of roles) {

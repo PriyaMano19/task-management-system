@@ -317,10 +317,7 @@ export default function CreateTaskModal({
 
       <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
 
-        {/* =====================================================
-            HEADER
-        ===================================================== */}
-
+    
         <div className="flex items-center justify-between border-b border-border px-6 py-5">
 
           <div>
@@ -344,10 +341,7 @@ export default function CreateTaskModal({
 
         </div>
 
-        {/* =====================================================
-            BODY
-        ===================================================== */}
-
+   
         <form
           onSubmit={handleSubmit}
           className="overflow-y-auto"
@@ -626,10 +620,6 @@ export default function CreateTaskModal({
             </div>
 
           </div>
-
-          {/* ===================================================
-              FOOTER
-          =================================================== */}
 
           <div className="flex items-center justify-end gap-3 border-t border-border px-6 py-4">
 

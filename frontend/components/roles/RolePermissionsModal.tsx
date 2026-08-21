@@ -48,9 +48,9 @@ export default function RolePermissionsModal({
   const [expandedModules, setExpandedModules] =
     useState<Set<string>>(new Set());
 
-  // ============================================================
+
   // LOAD PERMISSIONS
-  // ============================================================
+
 
   useEffect(() => {
     if (!open || !role) {
@@ -104,9 +104,9 @@ export default function RolePermissionsModal({
     loadPermissions();
   }, [open, role]);
 
-  // ============================================================
+
   // GROUP PERMISSIONS
-  // ============================================================
+
 
   const groupedPermissions = useMemo(() => {
     return permissions.reduce<
@@ -122,9 +122,9 @@ export default function RolePermissionsModal({
     }, {});
   }, [permissions]);
 
-  // ============================================================
+
   // TOGGLE MODULE
-  // ============================================================
+
 
   const toggleModule = (module: string) => {
     setExpandedModules((current) => {
@@ -140,9 +140,9 @@ export default function RolePermissionsModal({
     });
   };
 
-  // ============================================================
+
   // TOGGLE PERMISSION
-  // ============================================================
+
 
   const togglePermission = (
     permissionId: string
@@ -160,9 +160,9 @@ export default function RolePermissionsModal({
     });
   };
 
-  // ============================================================
+
   // SELECT ALL MODULE PERMISSIONS
-  // ============================================================
+
 
   const toggleModulePermissions = (
     modulePermissions: Permission[]
@@ -187,9 +187,9 @@ export default function RolePermissionsModal({
     });
   };
 
-  // ============================================================
+
   // SAVE
-  // ============================================================
+
 
   const handleSave = async () => {
     if (!role) {
@@ -228,26 +228,23 @@ export default function RolePermissionsModal({
     }
   };
 
-  // ============================================================
+
   // DON'T RENDER
-  // ============================================================
+
 
   if (!open || !role) {
     return null;
   }
 
-  // ============================================================
+
   // UI
-  // ============================================================
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
 
-        {/* ================================================== */}
-        {/* HEADER */}
-        {/* ================================================== */}
-
+   
         <div className="flex items-center justify-between border-b border-border px-6 py-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -278,10 +275,7 @@ export default function RolePermissionsModal({
           </button>
         </div>
 
-        {/* ================================================== */}
-        {/* CONTENT */}
-        {/* ================================================== */}
-
+   
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
             <div className="flex min-h-[350px] items-center justify-center">
@@ -445,10 +439,7 @@ export default function RolePermissionsModal({
           )}
         </div>
 
-        {/* ================================================== */}
-        {/* FOOTER */}
-        {/* ================================================== */}
-
+    
         <div className="flex items-center justify-between border-t border-border bg-muted/20 px-6 py-4">
           <div className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">

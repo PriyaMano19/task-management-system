@@ -984,10 +984,7 @@ const closeMembersModal = () => {
       )}
 
 
-      {/* ========================================================
-          CREATE / EDIT MODAL
-      ======================================================== */}
-
+  
       {showModal && (
 
         <div
@@ -1009,10 +1006,7 @@ const closeMembersModal = () => {
           <div className="w-full max-w-2xl rounded-2xl border border-border bg-card shadow-2xl">
 
 
-            {/* ==================================================
-                MODAL HEADER
-            ================================================== */}
-
+        
             <div className="border-b border-border p-6">
 
               <div className="flex items-center justify-between">
@@ -1055,10 +1049,7 @@ const closeMembersModal = () => {
             </div>
 
 
-            {/* ==================================================
-                FORM
-            ================================================== */}
-
+       
             <form
               onSubmit={
                 handleSubmit
@@ -1281,10 +1272,7 @@ const closeMembersModal = () => {
               </div>
 
 
-              {/* ==================================================
-                  ACTIONS
-              ================================================== */}
-
+          
               <div className="flex justify-end gap-3 border-t border-border pt-5">
 
 
