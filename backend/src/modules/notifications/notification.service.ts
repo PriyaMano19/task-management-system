@@ -66,11 +66,7 @@ class NotificationService {
   }
 
 
-  /**
-   * ----------------------------------------------------------
-   * TASK ASSIGNED
-   * ----------------------------------------------------------
-   */
+
 
   async notifyTaskAssigned(
     task: any,
@@ -109,11 +105,7 @@ class NotificationService {
   }
 
 
-  /**
-   * ----------------------------------------------------------
-   * STATUS CHANGED
-   * ----------------------------------------------------------
-   */
+
 
   async notifyTaskStatusChanged(
     task: any,
@@ -158,11 +150,7 @@ class NotificationService {
   }
 
 
-  /**
-   * ----------------------------------------------------------
-   * ASSIGNEE CHANGED
-   * ----------------------------------------------------------
-   */
+
 
   async notifyAssigneeChanged(
     task: any,
@@ -201,11 +189,7 @@ class NotificationService {
   }
 
 
-  /**
-   * ----------------------------------------------------------
-   * DUE DATE APPROACHING
-   * ----------------------------------------------------------
-   */
+
 
   async notifyDueDateApproaching(
     task: any,
@@ -248,11 +232,6 @@ class NotificationService {
   }
 
 
-  /**
-   * ----------------------------------------------------------
-   * DUE TODAY
-   * ----------------------------------------------------------
-   */
 
   async notifyDueToday(
     task: any,
@@ -295,11 +274,7 @@ class NotificationService {
   }
 
 
-  /**
-   * ----------------------------------------------------------
-   * OVERDUE
-   * ----------------------------------------------------------
-   */
+
 
   async notifyTaskOverdue(
     task: any,

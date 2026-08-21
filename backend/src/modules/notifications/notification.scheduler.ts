@@ -4,11 +4,7 @@ import { notificationService } from "./notification.service";
 
 class NotificationScheduler {
 
-  /**
-   * Start notification scheduler.
-   *
-   * Runs every hour.
-   */
+
   start() {
 
     cron.schedule(
@@ -43,11 +39,6 @@ class NotificationScheduler {
   }
 
 
-  /**
-   * ----------------------------------------------------------
-   * PROCESS TASK NOTIFICATIONS
-   * ----------------------------------------------------------
-   */
 
   private async processTaskNotifications() {
 
@@ -311,11 +302,6 @@ class NotificationScheduler {
   }
 
 
-  /**
-   * ----------------------------------------------------------
-   * CHECK DUPLICATE
-   * ----------------------------------------------------------
-   */
 
   private async hasNotificationBeenSent(
     taskId: string,
@@ -341,11 +327,6 @@ class NotificationScheduler {
   }
 
 
-  /**
-   * ----------------------------------------------------------
-   * MARK SENT
-   * ----------------------------------------------------------
-   */
 
   private async markNotificationSent(
     taskId: string,
