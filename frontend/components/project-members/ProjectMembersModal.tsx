@@ -252,9 +252,6 @@ const handleRemoveMember = async (
 
       <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
 
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
 
         <div className="flex items-center justify-between border-b border-border px-6 py-5">
 
@@ -286,10 +283,7 @@ const handleRemoveMember = async (
 
         </div>
 
-        {/* ======================================================
-            CONTENT
-        ====================================================== */}
-
+ 
         <div className="overflow-y-auto p-6">
 
           {error && (
@@ -298,10 +292,7 @@ const handleRemoveMember = async (
             </div>
           )}
 
-          {/* ====================================================
-              ADD MEMBER
-          ==================================================== */}
-
+   
           <div className="rounded-2xl border border-border bg-muted/20 p-5">
 
             <div className="flex items-center gap-2">
@@ -374,10 +365,7 @@ const handleRemoveMember = async (
 
           </div>
 
-          {/* ====================================================
-              CURRENT MEMBERS
-          ==================================================== */}
-
+  
           <div className="mt-6">
 
             <div className="mb-3 flex items-center justify-between">
@@ -496,9 +484,6 @@ const handleRemoveMember = async (
 
         </div>
 
-        {/* ======================================================
-            FOOTER
-        ====================================================== */}
 
         <div className="flex justify-end border-t border-border px-6 py-4">
 

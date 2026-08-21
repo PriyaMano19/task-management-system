@@ -549,10 +549,7 @@ export default function UsersPage() {
 
       </div>
 
-      {/* ======================================================
-          CONTENT
-      ====================================================== */}
-
+ 
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
 
         {/* FILTER BAR */}
@@ -663,9 +660,6 @@ export default function UsersPage() {
           </div>
         )}
 
-        {/* ====================================================
-            TABLE
-        ==================================================== */}
 
         <div className="overflow-x-auto">
 
@@ -934,9 +928,6 @@ export default function UsersPage() {
 
       </div>
 
-      {/* ======================================================
-          CREATE / EDIT USER MODAL
-      ====================================================== */}
 
       {showFormModal && (
         <div
@@ -1220,9 +1211,6 @@ export default function UsersPage() {
         </div>
       )}
 
-      {/* ======================================================
-          DELETE CONFIRMATION MODAL
-      ====================================================== */}
 
       {deleteUser && (
         <div

@@ -4,9 +4,9 @@ const prisma = new PrismaClient();
 
 export async function seedPermissions() {
   const permissions = [
-    // ============================================================
+  
     // USER
-    // ============================================================
+  
     {
       module: "USER",
       action: "CREATE",
@@ -32,9 +32,9 @@ export async function seedPermissions() {
       description: "Delete users",
     },
 
-    // ============================================================
+  
     // ROLE
-    // ============================================================
+  
     {
       module: "ROLE",
       action: "CREATE",
@@ -60,9 +60,9 @@ export async function seedPermissions() {
       description: "Delete roles",
     },
 
-    // ============================================================
+  
     // PROJECT
-    // ============================================================
+  
     {
       module: "PROJECT",
       action: "CREATE",
@@ -88,9 +88,9 @@ export async function seedPermissions() {
       description: "Delete projects",
     },
 
-    // ============================================================
+  
     // PROJECT MEMBER
-    // ============================================================
+  
     {
       module: "PROJECT_MEMBER",
       action: "VIEW",
@@ -110,9 +110,9 @@ export async function seedPermissions() {
       description: "Remove project members",
     },
 
-    // ============================================================
+  
     // FOLDER
-    // ============================================================
+  
     {
       module: "FOLDER",
       action: "CREATE",
@@ -138,9 +138,9 @@ export async function seedPermissions() {
       description: "Delete folders",
     },
 
-    // ============================================================
+  
     // TASK
-    // ============================================================
+  
     {
       module: "TASK",
       action: "CREATE",
@@ -172,9 +172,9 @@ export async function seedPermissions() {
       description: "Assign tasks",
     },
 
-    // ============================================================
+  
     // TASK COMMENT
-    // ============================================================
+  
     {
       module: "TASK_COMMENT",
       action: "CREATE",
@@ -194,9 +194,9 @@ export async function seedPermissions() {
       description: "Delete own task comments",
     },
 
-    // ============================================================
+  
     // ATTACHMENT
-    // ============================================================
+  
     {
       module: "TASK_ATTACHMENT",
       action: "UPLOAD",

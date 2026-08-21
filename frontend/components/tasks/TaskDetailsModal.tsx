@@ -2,18 +2,31 @@
 import {
   CalendarDays,
   MessageCircle,
-  Clock3,
   Paperclip,
-  User,
   X,
   Upload,
   Download,
   Trash2,
   Loader2,
+  ChevronDown,
+  MoreHorizontal,
+  CheckCircle2,
+  AlertCircle,
+  FolderKanban,
+  Send,
+  Type,
+  Bold,
+  List,
+  ListOrdered,
+  Palette,
+  Code2,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import {
   ChangeEvent,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import api from "@/services/api";
@@ -235,6 +248,9 @@ export default function TaskDetailsModal({
   const [description, setDescription] =
     useState("");
 
+  const descriptionEditorRef =
+    useRef<HTMLDivElement | null>(null);
+
   const [status, setStatus] =
     useState<TaskStatus>("TODO");
 
@@ -334,6 +350,58 @@ const [attachmentDeletingId, setAttachmentDeletingId] =
   const canDeleteTask =
   isReporter;
   
+  const runDescriptionCommand = (
+    command: string,
+    value?: string
+  ) => {
+    if (!canEditTaskDetails || saving) {
+      return;
+    }
+
+    descriptionEditorRef.current?.focus();
+
+    document.execCommand(
+      command,
+      false,
+      value
+    );
+
+    if (descriptionEditorRef.current) {
+      setDescription(
+        descriptionEditorRef.current.innerHTML
+      );
+    }
+  };
+
+
+  const handleDescriptionInput = (
+    event: React.FormEvent<HTMLDivElement>
+  ) => {
+    setDescription(
+      event.currentTarget.innerHTML
+    );
+  };
+
+  const getDescriptionHtml = (
+    value: string
+  ) => {
+    if (!value.trim()) {
+      return "";
+    }
+
+    // Existing descriptions may be plain text.
+    // Preserve them as readable HTML.
+    if (!/<[a-z][\s\S]*>/i.test(value)) {
+      return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\n/g, "<br />");
+    }
+
+    return value;
+  };
+
   useEffect(() => {
     if (!open || !task) {
       return;
@@ -577,6 +645,15 @@ const [attachmentDeletingId, setAttachmentDeletingId] =
     setDescription(
       task.description ?? ""
     );
+
+    requestAnimationFrame(() => {
+      if (descriptionEditorRef.current) {
+        descriptionEditorRef.current.innerHTML =
+          getDescriptionHtml(
+            task.description ?? ""
+          );
+      }
+    });
 
     setStatus(task.status);
 
@@ -863,6 +940,45 @@ const openDeleteAttachmentConfirmation = (
   setAttachmentToDelete(attachment);
 };
 
+  const getInitials = (
+    firstName?: string,
+    lastName?: string
+  ) => {
+    return `${firstName?.charAt(0) ?? ""}${lastName?.charAt(0) ?? ""}`
+      .toUpperCase();
+  };
+
+  const statusLabel =
+    statusOptions.find(
+      (option) => option.value === status
+    )?.label ?? status;
+
+  const priorityLabel =
+    priorityOptions.find(
+      (option) => option.value === priority
+    )?.label ?? priority;
+
+  const priorityClass = {
+    LOW: "border-border bg-muted/40 text-muted-foreground",
+    MEDIUM:
+      "border-blue-200 bg-blue-500/10 text-blue-600",
+    HIGH:
+      "border-orange-200 bg-orange-500/10 text-orange-600",
+    URGENT:
+      "border-red-200 bg-red-500/10 text-destructive",
+  }[priority];
+
+  const statusClass = {
+    TODO:
+      "border-border bg-muted/40 text-card-foreground",
+    IN_PROGRESS:
+      "border-blue-200 bg-blue-500/10 text-blue-600",
+    HOLD:
+      "border-amber-200 bg-amber-500/10 text-amber-300",
+    DONE:
+      "border-emerald-200 bg-emerald-500/10 text-emerald-400",
+  }[status];
+
   if (!open || !task) {
     return null;
   }
@@ -872,485 +988,590 @@ const openDeleteAttachmentConfirmation = (
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
       onMouseDown={(event) => {
         if (
-          event.target ===
-          event.currentTarget
+          event.target === event.currentTarget &&
+          !saving &&
+          !attachmentToDelete &&
+          !showDeleteTaskConfirmation
         ) {
           onClose();
         }
       }}
     >
-      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+      <div
+        className="
+          flex h-[96vh] w-full max-w-[1450px] flex-col
+          overflow-hidden rounded-2xl border border-border
+          bg-card text-card-foreground shadow-2xl
+        "
+      >
+        {/* ====================================================== */}
+        {/* HEADER / BREADCRUMB                                   */}
+        {/* ====================================================== */}
+        <header className="shrink-0 border-b border-border bg-card">
+          <div className="flex items-center justify-between gap-4 px-5 py-3 sm:px-7">
+            <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+              <FolderKanban className="h-4 w-4 shrink-0" />
 
-     
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={saving}
+                className="shrink-0 transition hover:text-card-foreground disabled:opacity-50"
+              >
+                Projects
+              </button>
 
-        <div className="flex items-start justify-between border-b border-border px-6 py-5">
-          <div>
-            <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Task
-            </p>
+              <span>/</span>
 
-            <h2 className="text-xl font-bold tracking-tight text-card-foreground">
-              Task Details
-            </h2>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={saving}
+                className="shrink-0 transition hover:text-card-foreground disabled:opacity-50"
+              >
+                Project
+              </button>
 
-            <div className="mt-2 flex flex-wrap gap-2">
-              {isReporter && (
-                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                  Reporter
-                </span>
-              )}
+              <span>/</span>
 
-              {isAssignee && (
-                <span className="rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-600">
-                  Assignee
-                </span>
-              )}
+              <span className="truncate text-card-foreground">
+                Task
+              </span>
+            </div>
 
-              {!isReporter &&
-                !isAssignee && (
-                  <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                    Project Member
-                  </span>
-                )}
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                className="hidden rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-card-foreground sm:block"
+                title="More actions"
+              >
+                <MoreHorizontal className="h-5 w-5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={saving}
+                className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-card-foreground disabled:opacity-50"
+                aria-label="Close task"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+          <div className="px-5 pb-5 sm:px-7 sm:pb-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  {isReporter && (
+                    <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                      Reporter
+                    </span>
+                  )}
 
-       
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-5">
+                  {isAssignee && (
+                    <span className="rounded-full bg-blue-500/10 px-2.5 py-1 text-[11px] font-semibold text-blue-600">
+                      Assignee
+                    </span>
+                  )}
 
-            {/* ERROR */}
+                  {!isReporter && !isAssignee && (
+                    <span className="rounded-full bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                      Project Member
+                    </span>
+                  )}
 
-            {error && (
-              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
-                {error}
-              </div>
-            )}
+                  <span className="text-xs text-muted-foreground">
+                    #{task.id.slice(-8)}
+                  </span>
+                </div>
 
-          
-            <div>
-              <label className="mb-2 block text-sm font-medium text-card-foreground">
-                Task Title
-              </label>
-
-              <input
-                value={title}
-                onChange={(event) =>
-                  setTitle(
-                    event.target.value
-                  )
-                }
-                disabled={
-                  !canEditTaskDetails
-                }
-                className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-muted/50 disabled:opacity-70"
-                placeholder="Enter task title"
-              />
-
-              {!canEditTaskDetails && (
-                <p className="mt-1.5 text-xs text-muted-foreground">
-                  Only the reporter can edit
-                  the task title.
-                </p>
-              )}
-            </div>
-
-            {/* =================================================
-                DESCRIPTION
-            ================================================= */}
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-card-foreground">
-                Description
-              </label>
-
-              <textarea
-                value={description}
-                onChange={(event) =>
-                  setDescription(
-                    event.target.value
-                  )
-                }
-                disabled={
-                  !canEditTaskDetails
-                }
-                rows={5}
-                className="w-full resize-none rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-muted/50 disabled:opacity-70"
-                placeholder="Describe the task..."
-              />
-            </div>
-
-           
-
-            <div className="grid gap-4 sm:grid-cols-2">
-
-              {/* STATUS */}
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-card-foreground">
-                  Status
-                </label>
-
-                <div className="relative">
-                  <select
-                    value={status}
+                {canEditTaskDetails ? (
+                  <input
+                    value={title}
                     onChange={(event) =>
-                      setStatus(
-                        event.target
-                          .value as TaskStatus
-                      )
+                      setTitle(event.target.value)
                     }
-                    disabled={
-                      !canChangeStatus
-                    }
-                    className="w-full appearance-none rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-muted/50 disabled:opacity-70"
-                  >
-                    {statusOptions.map(
-                      (option) => (
+                    disabled={saving}
+                    className="
+                      w-full max-w-4xl bg-transparent
+                      text-lg font-bold tracking-tight
+                      text-card-foreground outline-none
+                      placeholder:text-muted-foreground
+                      sm:text-3xl lg:text-[34px]
+                    "
+                    placeholder="Task title"
+                  />
+                ) : (
+                  <h2 className="max-w-4xl text-lg font-bold tracking-tight text-card-foreground sm:text-3xl lg:text-[34px]">
+                    {task.title}
+                  </h2>
+                )}
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Task details and activity
+                </p>
+              </div>
+
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                {canChangeStatus ? (
+                  <div className="relative">
+                    <select
+                      value={status}
+                      onChange={(event) =>
+                        setStatus(
+                          event.target.value as TaskStatus
+                        )
+                      }
+                      disabled={saving}
+                      className={`
+                        appearance-none rounded-lg border
+                        px-3 py-2 pr-9 text-sm font-semibold
+                        outline-none transition
+                        disabled:cursor-not-allowed disabled:opacity-60
+                        ${statusClass}
+                      `}
+                    >
+                      {statusOptions.map((option) => (
                         <option
-                          key={
-                            option.value
-                          }
-                          value={
-                            option.value
-                          }
+                          key={option.value}
+                          value={option.value}
+                          className="bg-card text-card-foreground"
                         >
                           {option.label}
                         </option>
-                      )
-                    )}
-                  </select>
+                      ))}
+                    </select>
 
-                  <Clock3 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                </div>
-
-                {canChangeStatus && (
-                  <p className="mt-1.5 text-xs text-muted-foreground">
-                    You can change the
-                    task status.
-                  </p>
-                )}
-              </div>
-
-              {/* PRIORITY */}
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-card-foreground">
-                  Priority
-                </label>
-
-                <select
-                  value={priority}
-                  onChange={(event) =>
-                    setPriority(
-                      event.target
-                        .value as TaskPriority
-                    )
-                  }
-                  disabled={
-                    !canEditTaskDetails
-                  }
-                  className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-muted/50 disabled:opacity-70"
-                >
-                  {priorityOptions.map(
-                    (option) => (
-                      <option
-                        key={
-                          option.value
-                        }
-                        value={
-                          option.value
-                        }
-                      >
-                        {option.label}
-                      </option>
-                    )
-                  )}
-                </select>
-              </div>
-            </div>
-
-        
-
-            <div className="grid gap-4 sm:grid-cols-2">
-
-              {/* ASSIGNEE */}
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-card-foreground">
-                  Assigned To
-                </label>
-
-                <div className="relative">
-                  <select
-                    value={assignedToId}
-                    onChange={(event) =>
-                      setAssignedToId(
-                        event.target.value
-                      )
-                    }
-                    disabled={
-                      loadingMembers ||
-                      !canEditTaskDetails
-                    }
-                    className="w-full appearance-none rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-muted/50 disabled:opacity-70"
+                    <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 opacity-70" />
+                  </div>
+                ) : (
+                  <span
+                    className={`rounded-lg border px-3 py-2 text-sm font-semibold ${statusClass}`}
                   >
-                    <option value="">
-                      Unassigned
-                    </option>
+                    {statusLabel}
+                  </span>
+                )}
 
-                    {members.map(
-                      (member) => (
-                        <option
-                          key={
-                            member.userId
-                          }
-                          value={
-                            member.userId
-                          }
-                        >
-                          {
-                            member.user
-                              .firstName
-                          }{" "}
-                          {
-                            member.user
-                              .lastName
-                          }
-                        </option>
-                      )
-                    )}
-                  </select>
+                <span
+                  className={`rounded-lg border px-3 py-2 text-sm font-semibold ${priorityClass}`}
+                >
+                  {priorityLabel}
+                </span>
 
-                  <User className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                </div>
-
-                {loadingMembers && (
-                  <p className="mt-1.5 text-xs text-muted-foreground">
-                    Loading project
-                    members...
-                  </p>
+                {status === "DONE" && (
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-400">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Done
+                  </span>
                 )}
               </div>
-
-              {/* DUE DATE */}
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-card-foreground">
-                  Due Date
-                </label>
-
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={(event) =>
-                      setDueDate(
-                        event.target.value
-                      )
-                    }
-                    disabled={
-                      !canEditTaskDetails
-                    }
-                    className="w-full rounded-xl border border-input bg-background px-4 py-3 pr-10 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-muted/50 disabled:opacity-70"
-                  />
-
-                  <CalendarDays className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                </div>
-              </div>
             </div>
+          </div>
+        </header>
 
-
-            <section>
-              <div className="rounded-xl border border-border bg-muted/20 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <User className="h-4 w-4" />
+        {/* ====================================================== */}
+        {/* MAIN CONTENT                                            */}
+        {/* ====================================================== */}
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <div className="grid h-full min-h-0 lg:grid-cols-[minmax(0,1fr)_350px]">
+            {/* ================================================== */}
+            {/* LEFT / MAIN                                         */}
+            {/* ================================================== */}
+            <main className="min-h-0 overflow-y-auto">
+              <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-6 sm:px-7 lg:px-9 lg:py-8">
+                {error && (
+                  <div className="flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-destructive">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{error}</span>
                   </div>
+                )}
 
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Reporter
-                    </p>
+                {/* DESCRIPTION */}
+                <section>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-card-foreground">
+                      Description
+                    </h3>
 
-                    <p className="mt-1 text-sm font-semibold text-card-foreground">
-                      {task.createdBy
-                        ? `${task.createdBy.firstName} ${task.createdBy.lastName}`
-                        : "Unknown"}
-                    </p>
-
-                    {task.createdBy
-                      ?.email && (
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {
-                          task.createdBy
-                            .email
-                        }
-                      </p>
+                    {!canEditTaskDetails && (
+                      <span className="text-xs text-muted-foreground">
+                        Read only
+                      </span>
                     )}
                   </div>
-                </div>
-              </div>
-            </section>
 
-        
-
-          <section>
-            <div className="mb-3 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-semibold text-card-foreground">
-                  Attachments
-                </h3>
-
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {attachments.length}{" "}
-                  file
-                  {attachments.length !== 1
-                    ? "s"
-                    : ""}
-                </p>
-              </div>
-
-              {canUploadAttachment && (
-                <label
-                  className={`inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition ${
-                    attachmentUploading
-                      ? "cursor-not-allowed opacity-60"
-                      : "cursor-pointer hover:opacity-90"
-                  }`}
-                >
-                  {attachmentUploading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Upload className="h-3.5 w-3.5" />
-                  )}
-
-                  {attachmentUploading
-                    ? "Uploading..."
-                    : "Add Attachment"}
-
-                  <input
-                    type="file"
-                    className="hidden"
-                    disabled={attachmentUploading}
-                    onChange={
-                      handleAttachmentUpload
-                    }
-                  />
-                </label>
-              )}
-            </div>
-
-            {attachments.length > 0 ? (
-              <div className="space-y-2">
-                {attachments.map(
-                  (attachment) => (
-                    <div
-                      key={attachment.id}
-                      className="flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/20 p-4"
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <Paperclip className="h-4 w-4" />
-                        </div>
-
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-card-foreground">
-                            {attachment.originalName}
-                          </p>
-
-                          <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
-                            <span>
-                              {formatFileSize(
-                                attachment.fileSize
-                              )}
-                            </span>
-
-                            <span>•</span>
-
-                            <span>
-                              {attachment.uploadedBy
-                                ? `Uploaded by ${attachment.uploadedBy.firstName} ${attachment.uploadedBy.lastName}`
-                                : "Uploaded"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex shrink-0 items-center gap-2">
-                        {/* DOWNLOAD */}
+                  {canEditTaskDetails ? (
+                    <div className="overflow-hidden rounded-xl border border-border bg-background">
+                      {/* Description toolbar */}
+                      <div className="flex flex-wrap items-center gap-1 border-b border-border px-2 py-2">
                         <button
                           type="button"
-                          onClick={async () => {
-                            try {
-                              const response =
-                                await api.get(
-                                  `/projects/${projectId}/folders/${task.folderId}/tasks/${task.id}/attachments/${attachment.id}`,
-                                  {
-                                    responseType:
-                                      "blob",
-                                  }
-                                );
-
-                              const blobUrl =
-                                window.URL.createObjectURL(
-                                  new Blob([
-                                    response.data,
-                                  ])
-                                );
-
-                              const link =
-                                document.createElement(
-                                  "a"
-                                );
-
-                              link.href = blobUrl;
-
-                              link.download =
-                                attachment.originalName;
-
-                              document.body.appendChild(
-                                link
-                              );
-
-                              link.click();
-
-                              link.remove();
-
-                              window.URL.revokeObjectURL(
-                                blobUrl
-                              );
-                            } catch (error) {
-                              console.error(
-                                "Failed to download attachment:",
-                                error
-                              );
-
-                              setError(
-                                getApiErrorMessage(
-                                  error,
-                                  "Failed to download attachment."
-                                )
-                              );
-                            }
-                          }}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-card-foreground transition hover:bg-muted"
+                          title="Text"
+                          onMouseDown={(event) =>
+                            event.preventDefault()
+                          }
+                          onClick={() =>
+                            runDescriptionCommand(
+                              "formatBlock",
+                              "p"
+                            )
+                          }
+                          disabled={saving}
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
                         >
-                          <Download className="h-3.5 w-3.5" />
-                         
+                          <Type className="h-4 w-4" />
                         </button>
 
-                       {/* DELETE - REPORTER OR ASSIGNEE ONLY */}
+                        <button
+                          type="button"
+                          title="Bold"
+                          onMouseDown={(event) =>
+                            event.preventDefault()
+                          }
+                          onClick={() =>
+                            runDescriptionCommand(
+                              "bold"
+                            )
+                          }
+                          disabled={saving}
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+                        >
+                          <Bold className="h-4 w-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          title="Bulleted list"
+                          onMouseDown={(event) =>
+                            event.preventDefault()
+                          }
+                          onClick={() =>
+                            runDescriptionCommand(
+                              "insertUnorderedList"
+                            )
+                          }
+                          disabled={saving}
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+                        >
+                          <List className="h-4 w-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          title="Numbered list"
+                          onMouseDown={(event) =>
+                            event.preventDefault()
+                          }
+                          onClick={() =>
+                            runDescriptionCommand(
+                              "insertOrderedList"
+                            )
+                          }
+                          disabled={saving}
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+                        >
+                          <ListOrdered className="h-4 w-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          title="Text color"
+                          onMouseDown={(event) =>
+                            event.preventDefault()
+                          }
+                          onClick={() =>
+                            runDescriptionCommand(
+                              "foreColor",
+                              "#2563eb"
+                            )
+                          }
+                          disabled={saving}
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+                        >
+                          <Palette className="h-4 w-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          title="Code"
+                          onMouseDown={(event) =>
+                            event.preventDefault()
+                          }
+                          onClick={() =>
+                            runDescriptionCommand(
+                              "formatBlock",
+                              "pre"
+                            )
+                          }
+                          disabled={saving}
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+                        >
+                          <Code2 className="h-4 w-4" />
+                        </button>
+
+                     
+
+                        <button
+                          type="button"
+                          title="Undo"
+                          onMouseDown={(event) =>
+                            event.preventDefault()
+                          }
+                          onClick={() =>
+                            runDescriptionCommand(
+                              "undo"
+                            )
+                          }
+                          disabled={saving}
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+                        >
+                          <Undo2 className="h-4 w-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          title="Redo"
+                          onMouseDown={(event) =>
+                            event.preventDefault()
+                          }
+                          onClick={() =>
+                            runDescriptionCommand(
+                              "redo"
+                            )
+                          }
+                          disabled={saving}
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+                        >
+                          <Redo2 className="h-4 w-4" />
+                        </button>
+
+                      
+                      </div>
+
+                      {/* Description editor */}
+                      <div
+                        ref={descriptionEditorRef}
+                        contentEditable={!saving}
+                        suppressContentEditableWarning
+                        onInput={
+                          handleDescriptionInput
+                        }
+                        data-placeholder="Add a description..."
+                        className="
+                          min-h-[150px] w-full
+                          px-4 py-4
+                          text-sm leading-6
+                          text-card-foreground
+                          outline-none
+                          [&:empty]:before:pointer-events-none
+                          [&:empty]:before:text-muted-foreground
+                          [&:empty]:before:content-[attr(data-placeholder)]
+                          [&_a]:text-primary
+                          [&_a]:underline
+                          [&_pre]:my-2
+                          [&_pre]:rounded-lg
+                          [&_pre]:bg-muted
+                          [&_pre]:p-3
+                          [&_pre]:font-mono
+                          [&_ul]:list-disc
+                          [&_ul]:pl-6
+                          [&_ol]:list-decimal
+                          [&_ol]:pl-6
+                        "
+                      />
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-border bg-background px-4 py-4">
+                      {description.trim() ? (
+                        /<[a-z][\s\S]*>/i.test(
+                          description
+                        ) ? (
+                          <div
+                            className="
+                              text-sm leading-7 text-card-foreground
+                              [&_a]:text-primary
+                              [&_a]:underline
+                              [&_pre]:my-2
+                              [&_pre]:rounded-lg
+                              [&_pre]:bg-muted
+                              [&_pre]:p-3
+                              [&_pre]:font-mono
+                              [&_ul]:list-disc
+                              [&_ul]:pl-6
+                              [&_ol]:list-decimal
+                              [&_ol]:pl-6
+                            "
+                            dangerouslySetInnerHTML={{
+                              __html:
+                                description,
+                            }}
+                          />
+                        ) : (
+                          <p className="whitespace-pre-wrap text-sm leading-7 text-card-foreground">
+                            {description}
+                          </p>
+                        )
+                      ) : (
+                        <p className="text-sm italic text-muted-foreground">
+                          No description added.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </section>
+
+                {/* ATTACHMENTS */}
+                <section>
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-card-foreground">
+                        Attachments
+                      </h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {attachments.length}{" "}
+                        {attachments.length === 1
+                          ? "file"
+                          : "files"}
+                      </p>
+                    </div>
+
+                    {canUploadAttachment && (
+                      <label
+                        className={`
+                          inline-flex items-center gap-2 rounded-lg
+                          border border-border bg-white/5
+                          px-3 py-2 text-xs font-semibold
+                          text-card-foreground transition
+                          ${
+                            attachmentUploading
+                              ? "cursor-not-allowed opacity-50"
+                              : "cursor-pointer hover:bg-muted"
+                          }
+                        `}
+                      >
+                        {attachmentUploading ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="h-3.5 w-3.5" />
+                        )}
+
+                        {attachmentUploading
+                          ? "Uploading..."
+                          : "Add attachment"}
+
+                        <input
+                          type="file"
+                          className="hidden"
+                          disabled={attachmentUploading}
+                          onChange={
+                            handleAttachmentUpload
+                          }
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {attachments.length > 0 ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {attachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className="
+                            group flex min-w-0 items-center
+                            justify-between gap-3 rounded-xl
+                            border border-border bg-background
+                            p-3.5 transition hover:border-border
+                          "
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                              <Paperclip className="h-4 w-4" />
+                            </div>
+
+                            <div className="min-w-0">
+                              <p
+                                className="truncate text-sm font-medium text-card-foreground"
+                                title={
+                                  attachment.originalName
+                                }
+                              >
+                                {attachment.originalName}
+                              </p>
+
+                              <p className="mt-1 truncate text-xs text-muted-foreground">
+                                {formatFileSize(
+                                  attachment.fileSize
+                                )}{" "}
+                                •{" "}
+                                {attachment.uploadedBy
+                                  ? `Uploaded by ${attachment.uploadedBy.firstName} ${attachment.uploadedBy.lastName}`
+                                  : "Uploaded"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  const response =
+                                    await api.get(
+                                      `/projects/${projectId}/folders/${task.folderId}/tasks/${task.id}/attachments/${attachment.id}`,
+                                      {
+                                        responseType:
+                                          "blob",
+                                      }
+                                    );
+
+                                  const blobUrl =
+                                    window.URL.createObjectURL(
+                                      new Blob([
+                                        response.data,
+                                      ])
+                                    );
+
+                                  const link =
+                                    document.createElement(
+                                      "a"
+                                    );
+
+                                  link.href = blobUrl;
+                                  link.download =
+                                    attachment.originalName;
+
+                                  document.body.appendChild(
+                                    link
+                                  );
+
+                                  link.click();
+                                  link.remove();
+
+                                  window.URL.revokeObjectURL(
+                                    blobUrl
+                                  );
+                                } catch (error) {
+                                  console.error(
+                                    "Failed to download attachment:",
+                                    error
+                                  );
+
+                                  setError(
+                                    getApiErrorMessage(
+                                      error,
+                                      "Failed to download attachment."
+                                    )
+                                  );
+                                }
+                              }}
+                              className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-card-foreground"
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+
                             {canUploadAttachment && (
                               <button
                                 type="button"
@@ -1360,355 +1581,704 @@ const openDeleteAttachmentConfirmation = (
                                   )
                                 }
                                 disabled={
-                                  attachmentDeletingId === attachment.id
+                                  attachmentDeletingId ===
+                                  attachment.id
                                 }
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/30"
+                                className="rounded-lg p-2 text-muted-foreground transition hover:bg-red-500/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
+                                title="Delete"
                               >
-                                {attachmentDeletingId === attachment.id ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                {attachmentDeletingId ===
+                                attachment.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
-                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <Trash2 className="h-4 w-4" />
                                 )}
                               </button>
                             )}
-                      </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  )
-                )}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-dashed border-border p-6 text-center">
-                <Paperclip className="mx-auto h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-border bg-muted/20 px-6 py-10 text-center">
+                      <Paperclip className="mx-auto h-5 w-5 text-muted-foreground" />
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        No attachments
+                      </p>
+                    </div>
+                  )}
+                </section>
 
-                <p className="mt-2 text-sm text-muted-foreground">
-                  No attachments
-                </p>
-              </div>
-            )}
-          </section>
-           
+                {/* COMMENTS / ACTIVITY */}
+                <section>
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-card-foreground">
+                        Activity
+                      </h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {comments.length}{" "}
+                        {comments.length === 1
+                          ? "comment"
+                          : "comments"}
+                      </p>
+                    </div>
 
-            <section>
-              <div className="mb-4">
-                <h3 className="text-sm font-semibold text-card-foreground">
-                  Comments
-                </h3>
+                    <MessageCircle className="h-5 w-5 text-muted-foreground" />
+                  </div>
 
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {comments.length}{" "}
-                  {comments.length === 1
-                    ? "comment"
-                    : "comments"}
-                </p>
-              </div>
+                  {commentsLoading ? (
+                    <div className="rounded-xl border border-border bg-background p-8 text-center">
+                      <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Loading comments...
+                      </p>
+                    </div>
+                  ) : comments.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
+                      <MessageCircle className="mx-auto h-5 w-5 text-muted-foreground" />
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        No comments yet.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {comments.map((comment) => {
+                        const isCommentAuthor =
+                          comment.userId ===
+                          currentUserId;
 
-              {commentsLoading ? (
-                <div className="rounded-xl border border-border p-6 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Loading comments...
-                  </p>
-                </div>
-              ) : comments.length ===
-                0 ? (
-                <div className="rounded-xl border border-dashed border-border p-6 text-center">
-                  <MessageCircle className="mx-auto h-5 w-5 text-muted-foreground" />
-
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    No comments yet.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {comments.map(
-                    (comment) => {
-                      const isCommentAuthor =
-                        comment.userId ===
-                        currentUserId;
-
-                      return (
-                        <div
-                          key={
-                            comment.id
-                          }
-                          className="rounded-xl border border-border bg-muted/20 p-4"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex min-w-0 items-center gap-3">
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                                {comment.user.firstName.charAt(
-                                  0
-                                )}
-                                {comment.user.lastName.charAt(
-                                  0
-                                )}
-                              </div>
-
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium text-card-foreground">
-                                  {
-                                    comment
-                                      .user
-                                      .firstName
-                                  }{" "}
-                                  {
-                                    comment
-                                      .user
-                                      .lastName
-                                  }
-
-                                  {isCommentAuthor && (
-                                    <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                                      You
-                                    </span>
+                        return (
+                          <div
+                            key={comment.id}
+                            className="rounded-xl border border-border bg-background p-4"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex min-w-0 items-center gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                                  {getInitials(
+                                    comment.user.firstName,
+                                    comment.user.lastName
                                   )}
-                                </p>
+                                </div>
 
-                                <p className="text-xs text-muted-foreground">
-                                  {new Date(
-                                    comment.createdAt
-                                  ).toLocaleString()}
-                                </p>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium text-card-foreground">
+                                    {comment.user.firstName}{" "}
+                                    {comment.user.lastName}
+
+                                    {isCommentAuthor && (
+                                      <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                                        You
+                                      </span>
+                                    )}
+                                  </p>
+
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(
+                                      comment.createdAt
+                                    ).toLocaleString(
+                                      "en-LK"
+                                    )}
+                                  </p>
+                                </div>
                               </div>
+
+                              {isCommentAuthor && (
+                                <div className="flex shrink-0 items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingCommentId(
+                                        comment.id
+                                      );
+                                      setEditingCommentText(
+                                        comment.content
+                                      );
+                                    }}
+                                    className="rounded-lg px-2 py-1 text-xs text-muted-foreground transition hover:bg-muted hover:text-card-foreground"
+                                  >
+                                    Edit
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleDeleteComment(
+                                        comment.id
+                                      )
+                                    }
+                                    className="rounded-lg px-2 py-1 text-xs text-destructive transition hover:bg-red-500/10"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
                             </div>
 
-                            {/* ONLY COMMENT AUTHOR CAN EDIT/DELETE */}
-
-                            {isCommentAuthor && (
-                              <div className="flex items-center gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setEditingCommentId(
-                                      comment.id
-                                    );
-
+                            {editingCommentId ===
+                            comment.id ? (
+                              <div className="mt-3 space-y-2">
+                                <textarea
+                                  value={
+                                    editingCommentText
+                                  }
+                                  onChange={(event) =>
                                     setEditingCommentText(
-                                      comment.content
-                                    );
-                                  }}
-                                  className="rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-                                >
-                                  Edit
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleDeleteComment(
-                                      comment.id
+                                      event.target.value
                                     )
                                   }
-                                  className="rounded-lg px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
-                                >
-                                  Delete
-                                </button>
+                                  rows={3}
+                                  className="w-full resize-none rounded-xl border border-border bg-card px-3 py-2 text-sm text-card-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                />
+
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingCommentId(
+                                        null
+                                      );
+                                      setEditingCommentText(
+                                        ""
+                                      );
+                                    }}
+                                    className="rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-card-foreground"
+                                  >
+                                    Cancel
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleUpdateComment(
+                                        comment.id
+                                      )
+                                    }
+                                    disabled={
+                                      !editingCommentText.trim()
+                                    }
+                                    className="rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    Save
+                                  </button>
+                                </div>
                               </div>
+                            ) : (
+                              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-card-foreground">
+                                {comment.content}
+                              </p>
                             )}
                           </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
-                          {editingCommentId ===
-                          comment.id ? (
-                            <div className="mt-3 space-y-2">
-                              <textarea
-                                value={
-                                  editingCommentText
-                                }
-                                onChange={(
-                                  event
-                                ) =>
-                                  setEditingCommentText(
-                                    event
-                                      .target
-                                      .value
-                                  )
-                                }
-                                rows={3}
-                                className="w-full resize-none rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                              />
+                  <div className="mt-4 rounded-xl border border-border bg-background p-4">
+                    <textarea
+                      value={newComment}
+                      onChange={(event) =>
+                        setNewComment(
+                          event.target.value
+                        )
+                      }
+                      placeholder="Add a comment..."
+                      rows={3}
+                      className="w-full resize-none bg-transparent text-sm leading-6 text-card-foreground outline-none placeholder:text-muted-foreground"
+                    />
 
-                              <div className="flex justify-end gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setEditingCommentId(
-                                      null
-                                    );
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleAddComment}
+                        disabled={
+                          commentSubmitting ||
+                          !newComment.trim()
+                        }
+                        className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {commentSubmitting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
 
-                                    setEditingCommentText(
-                                      ""
-                                    );
-                                  }}
-                                  className="rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted"
+                        {commentSubmitting
+                          ? "Adding..."
+                          : "Add comment"}
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
+                {/* CREATED / UPDATED */}
+                <section className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-border bg-muted/20 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Created
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-card-foreground">
+                      {formatDate(task.createdAt)}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-border bg-muted/20 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Last updated
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-card-foreground">
+                      {formatDate(task.updatedAt)}
+                    </p>
+                  </div>
+                </section>
+              </div>
+            </main>
+
+            {/* ================================================== */}
+            {/* RIGHT / DETAILS                                    */}
+            {/* ================================================== */}
+            <aside className="min-h-0 overflow-y-auto border-t border-border bg-card lg:border-l lg:border-t-0">
+              <div className="space-y-7 p-5 sm:p-5">
+                <div>
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-base font-semibold text-card-foreground">
+                      Details
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* ASSIGNEE */}
+                    <div>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Assignee
+                      </p>
+
+                      {canEditTaskDetails ? (
+                        <div className="relative">
+                          <select
+                            value={assignedToId}
+                            onChange={(event) =>
+                              setAssignedToId(
+                                event.target.value
+                              )
+                            }
+                            disabled={
+                              loadingMembers || saving
+                            }
+                            className="
+                              w-full appearance-none rounded-xl
+                              border border-border bg-background
+                              px-3 py-3 pr-9 text-sm text-card-foreground
+                              outline-none focus:border-primary
+                              focus:ring-2 focus:ring-primary/20
+                              disabled:cursor-not-allowed disabled:opacity-60
+                            "
+                          >
+                            <option
+                              value=""
+                              className="bg-background"
+                            >
+                              Unassigned
+                            </option>
+
+                            {members.map((member) => (
+                              <option
+                                key={member.userId}
+                                value={member.userId}
+                                className="bg-background"
+                              >
+                                {member.user.firstName}{" "}
+                                {member.user.lastName}
+                              </option>
+                            ))}
+                          </select>
+
+                          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                            {task.assignedTo
+                              ? getInitials(
+                                  task.assignedTo
+                                    .firstName,
+                                  task.assignedTo
+                                    .lastName
+                                )
+                              : "—"}
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-card-foreground">
+                              {task.assignedTo
+                                ? `${task.assignedTo.firstName} ${task.assignedTo.lastName}`
+                                : "Unassigned"}
+                            </p>
+
+                            {task.assignedTo?.email && (
+                              <p className="truncate text-xs text-muted-foreground">
+                                {task.assignedTo.email}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* PRIORITY */}
+                    <div>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Priority
+                      </p>
+
+                      {canEditTaskDetails ? (
+                        <select
+                          value={priority}
+                          onChange={(event) =>
+                            setPriority(
+                              event.target.value as TaskPriority
+                            )
+                          }
+                          disabled={saving}
+                          className="
+                            w-full rounded-xl border border-border
+                            bg-background px-3 py-3 text-sm text-card-foreground
+                            outline-none focus:border-primary
+                            focus:ring-2 focus:ring-primary/20
+                            disabled:cursor-not-allowed disabled:opacity-60
+                          "
+                        >
+                          {priorityOptions.map(
+                            (option) => (
+                              <option
+                                key={option.value}
+                                value={option.value}
+                                className="bg-background"
+                              >
+                                {option.label}
+                              </option>
+                            )
+                          )}
+                        </select>
+                      ) : (
+                        <span
+                          className={`inline-flex rounded-lg border px-3 py-2 text-sm font-medium ${priorityClass}`}
+                        >
+                          {priorityLabel}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* STATUS */}
+                    <div>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Status
+                      </p>
+
+                      {canChangeStatus ? (
+                        <div className="relative">
+                          <select
+                            value={status}
+                            onChange={(event) =>
+                              setStatus(
+                                event.target.value as TaskStatus
+                              )
+                            }
+                            disabled={saving}
+                            className={`
+                              w-full appearance-none rounded-xl
+                              border px-3 py-3 pr-9 text-sm font-medium
+                              outline-none transition
+                              disabled:cursor-not-allowed disabled:opacity-60
+                              ${statusClass}
+                            `}
+                          >
+                            {statusOptions.map(
+                              (option) => (
+                                <option
+                                  key={option.value}
+                                  value={option.value}
+                                  className="bg-background text-card-foreground"
                                 >
-                                  Cancel
-                                </button>
+                                  {option.label}
+                                </option>
+                              )
+                            )}
+                          </select>
 
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleUpdateComment(
-                                      comment.id
-                                    )
-                                  }
-                                  disabled={
-                                    !editingCommentText.trim()
-                                  }
-                                  className="rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                  Save
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <p className="mt-3 whitespace-pre-wrap text-sm text-card-foreground">
-                              {
-                                comment.content
-                              }
+                          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-70" />
+                        </div>
+                      ) : (
+                        <span
+                          className={`inline-flex rounded-lg border px-3 py-2 text-sm font-medium ${statusClass}`}
+                        >
+                          {statusLabel}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* DUE DATE */}
+                    <div>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Due date
+                      </p>
+
+                      {canEditTaskDetails ? (
+                        <div className="relative">
+                          <input
+                            type="date"
+                            value={dueDate}
+                            onChange={(event) =>
+                              setDueDate(
+                                event.target.value
+                              )
+                            }
+                            disabled={saving}
+                            className="
+                              w-full rounded-xl border border-border
+                              bg-background px-3 py-3 text-sm text-card-foreground
+                              outline-none focus:border-primary
+                              focus:ring-2 focus:ring-primary/20
+                              disabled:cursor-not-allowed disabled:opacity-60
+                            "
+                          />
+
+                          <CalendarDays className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-sm text-card-foreground">
+                          <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                          {formatDate(task.dueDate)}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* REPORTER */}
+                    <div>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Reporter
+                      </p>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-xs font-semibold text-blue-600">
+                          {task.createdBy
+                            ? getInitials(
+                                task.createdBy.firstName,
+                                task.createdBy.lastName
+                              )
+                            : "—"}
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-card-foreground">
+                            {task.createdBy
+                              ? `${task.createdBy.firstName} ${task.createdBy.lastName}`
+                              : "Unknown"}
+                          </p>
+
+                          {task.createdBy?.email && (
+                            <p className="truncate text-xs text-muted-foreground">
+                              {task.createdBy.email}
                             </p>
                           )}
                         </div>
-                      );
-                    }
-                  )}
+                      </div>
+                    </div>
+
+                    {/* TASK ID */}
+                    <div>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Task ID
+                      </p>
+
+                      <p className="break-all rounded-lg bg-background px-3 py-2 text-xs text-muted-foreground">
+                        {task.id}
+                      </p>
+                    </div>
+
+                    {/* CREATED / UPDATED */}
+                    <div className="border-t border-border pt-5">
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Created
+                          </p>
+                          <p className="mt-1 text-sm text-card-foreground">
+                            {formatDate(task.createdAt)}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Last updated
+                          </p>
+                          <p className="mt-1 text-sm text-card-foreground">
+                            {formatDate(task.updatedAt)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
 
-              {/* ADD COMMENT */}
+                {/* PERMISSION SUMMARY */}
+                <div className="rounded-xl border border-border bg-background p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Your access
+                  </p>
 
-              <div className="mt-4">
-                <textarea
-                  value={newComment}
-                  onChange={(event) =>
-                    setNewComment(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Write a comment..."
-                  rows={3}
-                  className="w-full resize-none rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
-                />
+                  <div className="mt-3 space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">
+                        Edit details
+                      </span>
+                      <span
+                        className={
+                          canEditTaskDetails
+                            ? "text-emerald-400"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        {canEditTaskDetails
+                          ? "Allowed"
+                          : "View only"}
+                      </span>
+                    </div>
 
-                <div className="mt-2 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={
-                      handleAddComment
-                    }
-                    disabled={
-                      commentSubmitting ||
-                      !newComment.trim()
-                    }
-                    className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {commentSubmitting
-                      ? "Adding..."
-                      : "Add Comment"}
-                  </button>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">
+                        Change status
+                      </span>
+                      <span
+                        className={
+                          canChangeStatus
+                            ? "text-emerald-400"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        {canChangeStatus
+                          ? "Allowed"
+                          : "View only"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">
+                        Attachments
+                      </span>
+                      <span
+                        className={
+                          canUploadAttachment
+                            ? "text-emerald-400"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        {canUploadAttachment
+                          ? "Allowed"
+                          : "View only"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </section>
-
-           
-
-            <div className="rounded-xl bg-muted/40 p-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Created
-                  </p>
-
-                  <p className="mt-1 text-sm font-medium text-card-foreground">
-                    {formatDate(
-                      task.createdAt
-                    )}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Last Updated
-                  </p>
-
-                  <p className="mt-1 text-sm font-medium text-card-foreground">
-                    {formatDate(
-                      task.updatedAt
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
+            </aside>
           </div>
         </div>
 
-       
-
-       <div className="flex items-center justify-end gap-3 border-t border-border px-6 py-4">
-
-              {/* DELETE TASK - REPORTER ONLY */}
-              {canDeleteTask && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowDeleteTaskConfirmation(true)
-                  }
-                  disabled={saving}
-                  className="mr-auto inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/30"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete Task
-                </button>
-              )}
-
-              {/* CLOSE */}
+        {/* ====================================================== */}
+        {/* FOOTER                                                 */}
+        {/* ====================================================== */}
+        <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-card px-5 py-4 sm:px-7">
+          <div>
+            {canDeleteTask && (
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() =>
+                  setShowDeleteTaskConfirmation(true)
+                }
                 disabled={saving}
-                className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-card-foreground transition hover:bg-muted disabled:opacity-50"
+                className="
+                  inline-flex items-center gap-2 rounded-lg
+                  border border-red-500/20 px-3 py-2.5
+                  text-sm font-medium text-destructive transition
+                  hover:bg-red-500/10
+                  disabled:cursor-not-allowed disabled:opacity-50
+                "
               >
-                Close
+                <Trash2 className="h-4 w-4" />
+                Delete task
               </button>
+            )}
+          </div>
 
-              {/* SAVE */}
-              {(canEditTaskDetails || canChangeStatus) && (
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {saving ? "Saving..." : "Save Changes"}
-                </button>
-              )}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="
+                rounded-lg border border-border
+                px-3.5 py-2 text-sm font-medium text-card-foreground
+                transition hover:bg-muted hover:text-card-foreground
+                disabled:cursor-not-allowed disabled:opacity-50
+              "
+            >
+              Close
+            </button>
 
-            </div>
+            {(canEditTaskDetails || canChangeStatus) && (
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="
+                  inline-flex items-center gap-2 rounded-lg
+                  bg-primary px-4 py-2 text-sm font-semibold
+                  text-primary-foreground shadow-sm transition
+                  hover:opacity-90
+                  disabled:cursor-not-allowed disabled:opacity-60
+                "
+              >
+                {saving && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                {saving
+                  ? "Saving..."
+                  : "Save changes"}
+              </button>
+            )}
+          </div>
+        </footer>
       </div>
 
-     
-
+      {/* ======================================================== */}
+      {/* DELETE ATTACHMENT CONFIRMATION                           */}
+      {/* ======================================================== */}
       {attachmentToDelete && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              if (!attachmentDeletingId) {
-                setAttachmentToDelete(null);
-              }
+            if (
+              event.target === event.currentTarget &&
+              !attachmentDeletingId
+            ) {
+              setAttachmentToDelete(null);
             }
           }}
         >
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-background p-5 text-card-foreground shadow-2xl">
             <div className="flex items-start gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-destructive">
                 <Trash2 className="h-5 w-5" />
               </div>
 
               <div className="min-w-0 flex-1">
-                <h3 className="text-base font-semibold text-card-foreground">
-                  Delete Attachment
+                <h3 className="text-base font-semibold">
+                  Delete attachment
                 </h3>
 
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   Are you sure you want to delete{" "}
                   <span className="font-medium text-card-foreground">
                     "{attachmentToDelete.originalName}"
@@ -1725,7 +2295,8 @@ const openDeleteAttachmentConfirmation = (
                   }
                 }}
                 disabled={!!attachmentDeletingId}
-                className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+                className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-card-foreground disabled:opacity-50"
+                aria-label="Close confirmation"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1734,9 +2305,11 @@ const openDeleteAttachmentConfirmation = (
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                onClick={() => setAttachmentToDelete(null)}
+                onClick={() =>
+                  setAttachmentToDelete(null)
+                }
                 disabled={!!attachmentDeletingId}
-                className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-card-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-border px-3.5 py-2 text-sm font-medium text-card-foreground transition hover:bg-muted disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -1752,7 +2325,7 @@ const openDeleteAttachmentConfirmation = (
                   attachmentDeletingId ===
                   attachmentToDelete.id
                 }
-                className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3.5 py-2 text-sm font-medium text-card-foreground transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {attachmentDeletingId ===
                 attachmentToDelete.id ? (
@@ -1771,89 +2344,89 @@ const openDeleteAttachmentConfirmation = (
           </div>
         </div>
       )}
-      {/* DELETE TASK CONFIRMATION */}
-{showDeleteTaskConfirmation && (
-  <div
-    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-    onMouseDown={(event) => {
-      if (event.target === event.currentTarget) {
-        if (!saving) {
-          setShowDeleteTaskConfirmation(false);
-        }
-      }
-    }}
-  >
-    <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
 
-      <div className="flex items-start gap-4">
+      {/* ======================================================== */}
+      {/* DELETE TASK CONFIRMATION                                 */}
+      {/* ======================================================== */}
+      {showDeleteTaskConfirmation && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              !saving
+            ) {
+              setShowDeleteTaskConfirmation(false);
+            }
+          }}
+        >
+          <div className="w-full max-w-md rounded-2xl border border-border bg-background p-5 text-card-foreground shadow-2xl">
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-destructive">
+                <Trash2 className="h-5 w-5" />
+              </div>
 
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
-          <Trash2 className="h-5 w-5" />
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base font-semibold">
+                  Delete task
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Are you sure you want to delete{" "}
+                  <span className="font-medium text-card-foreground">
+                    "{task.title}"
+                  </span>
+                  ? This action cannot be undone.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowDeleteTaskConfirmation(false)
+                }
+                disabled={saving}
+                className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-card-foreground disabled:opacity-50"
+                aria-label="Close confirmation"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  setShowDeleteTaskConfirmation(false)
+                }
+                disabled={saving}
+                className="rounded-lg border border-border px-3.5 py-2 text-sm font-medium text-card-foreground transition hover:bg-muted disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDeleteTask}
+                disabled={saving}
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3.5 py-2 text-sm font-medium text-card-foreground transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Delete task
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
-
-        <div className="min-w-0 flex-1">
-
-          <h3 className="text-base font-semibold text-card-foreground">
-            Delete Task
-          </h3>
-
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Are you sure you want to delete this task?
-            This action cannot be undone.
-          </p>
-
-        </div>
-
-        <button
-          type="button"
-          onClick={() =>
-            setShowDeleteTaskConfirmation(false)
-          }
-          disabled={saving}
-          className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-      </div>
-
-      <div className="mt-6 flex justify-end gap-3">
-
-        <button
-          type="button"
-          onClick={() =>
-            setShowDeleteTaskConfirmation(false)
-          }
-          disabled={saving}
-          className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-card-foreground transition hover:bg-muted disabled:opacity-50"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="button"
-          onClick={handleDeleteTask}
-          disabled={saving}
-          className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Deleting...
-            </>
-          ) : (
-            <>
-              <Trash2 className="h-4 w-4" />
-              Delete Task
-            </>
-          )}
-        </button>
-
-      </div>
-
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 }

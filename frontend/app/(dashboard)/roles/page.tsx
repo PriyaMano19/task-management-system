@@ -237,14 +237,10 @@ export default function RolesPage() {
       setSaving(true);
       setError(null);
 
-      await api.post("/roles", {
-        name:
-          form.name.trim(),
-
-        description:
-          form.description.trim() ||
-          null,
-      });
+    await api.post("/roles", {
+      name: form.name.trim(),
+      description: form.description.trim(),
+    });
 
       setForm(initialForm);
       setShowFormModal(false);
@@ -283,9 +279,7 @@ export default function RolesPage() {
           name:
             form.name.trim(),
 
-          description:
-            form.description.trim() ||
-            null,
+         description: form.description.trim(),
         }
       );
 

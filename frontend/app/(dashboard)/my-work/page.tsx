@@ -522,10 +522,7 @@ useEffect(() => {
   
       <div className="grid gap-6 lg:grid-cols-3">
 
-        {/* ==================================================
-            TASK PROGRESS
-        ================================================== */}
-
+  
         <div className="
           rounded-2xl
           border
@@ -626,10 +623,7 @@ useEffect(() => {
 
         </div>
 
-        {/* ==================================================
-            UPCOMING DEADLINES
-        ================================================== */}
-
+ 
         <div className="
           rounded-2xl
           border
