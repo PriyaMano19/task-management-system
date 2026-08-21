@@ -7,44 +7,108 @@ class NotificationScheduler {
 
   start() {
 
+ 
     cron.schedule(
       "0 * * * *",
       async () => {
 
         console.log(
-          "⏰ Running task notification scheduler..."
+          "⏰ Running hourly task notification scheduler..."
         );
 
         try {
 
-          await this.processTaskNotifications();
+          await this.processHourlyNotifications();
 
           console.log(
-            "✅ Task notification scheduler completed."
+            "✅ Hourly task notification scheduler completed."
           );
 
         } catch (error) {
 
           console.error(
-            "❌ Task notification scheduler failed:",
+            "❌ Hourly task notification scheduler failed:",
             error
           );
         }
+      },
+      {
+        timezone: "Asia/Colombo",
       }
     );
 
+
+  
+    cron.schedule(
+      "0 8 * * *",
+      async () => {
+
+        console.log(
+          "🌅 Running daily due-today notification scheduler..."
+        );
+
+        try {
+
+          await this.processDueTodayNotifications();
+
+          console.log(
+            "✅ Daily due-today notification scheduler completed."
+          );
+
+        } catch (error) {
+
+          console.error(
+            "❌ Daily due-today notification scheduler failed:",
+            error
+          );
+        }
+      },
+      {
+        timezone: "Asia/Colombo",
+      }
+    );
+
+
     console.log(
-      "📅 Task notification scheduler started."
+      "📅 Task notification schedulers started."
+    );
+
+    console.log(
+      "   → Hourly: Due Soon + Overdue"
+    );
+
+    console.log(
+      "   → Daily 08:00: Due Today"
     );
   }
 
 
+  
+  private async processHourlyNotifications() {
 
-  private async processTaskNotifications() {
+    const now = new Date();
 
-    const now =
-      new Date();
 
+   
+    const today = new Date(now);
+
+    today.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+  
+    const tomorrow = new Date(today);
+
+    tomorrow.setDate(
+      tomorrow.getDate() + 1
+    );
+
+
+    
 
     const tasks =
       await prisma.task.findMany({
@@ -103,6 +167,7 @@ class NotificationScheduler {
       });
 
 
+   
     for (const task of tasks) {
 
       if (!task.dueDate) {
@@ -118,27 +183,26 @@ class NotificationScheduler {
         task.dueDate;
 
 
+   
+      const isDueToday =
+        dueDate >= today &&
+        dueDate < tomorrow;
+
+
+   
       const differenceMs =
         dueDate.getTime() -
         now.getTime();
-
 
       const differenceHours =
         differenceMs /
         (1000 * 60 * 60);
 
 
-      /*
-       * ------------------------------------------------------
-       * 1. DUE DATE APPROACHING
-       *
-       * Between 0 and 24 hours before due date.
-       * ------------------------------------------------------
-       */
-
       if (
         differenceHours > 0 &&
-        differenceHours <= 24
+        differenceHours <= 24 &&
+        !isDueToday
       ) {
 
         const alreadySent =
@@ -167,77 +231,13 @@ class NotificationScheduler {
       }
 
 
-      /*
-       * ------------------------------------------------------
-       * 2. DUE TODAY
-       * ------------------------------------------------------
-       */
-
-      const today =
-        new Date();
-
-      today.setHours(
-        0,
-        0,
-        0,
-        0
-      );
+      const isOverdue =
+        dueDate < today;
 
 
-      const tomorrow =
-        new Date(today);
+      if (isOverdue) {
 
-      tomorrow.setDate(
-        tomorrow.getDate() + 1
-      );
-
-
-      if (
-        dueDate >= today &&
-        dueDate < tomorrow
-      ) {
-
-        const alreadySent =
-          await this.hasNotificationBeenSent(
-            task.id,
-            task.assignedTo.id,
-            "DUE_TODAY"
-          );
-
-
-        if (!alreadySent) {
-
-          await notificationService
-            .notifyDueToday(
-              task,
-              task.assignedTo
-            );
-
-
-          await this.markNotificationSent(
-            task.id,
-            task.assignedTo.id,
-            "DUE_TODAY"
-          );
-        }
-      }
-
-
-      /*
-       * ------------------------------------------------------
-       * 3. OVERDUE
-       * ------------------------------------------------------
-       */
-
-      if (
-        dueDate.getTime() <
-        now.getTime()
-      ) {
-
-        /*
-         * Assignee
-         */
-
+      
         const assigneeAlreadySent =
           await this.hasNotificationBeenSent(
             task.id,
@@ -263,9 +263,7 @@ class NotificationScheduler {
         }
 
 
-        /*
-         * Reporter
-         */
+     
 
         if (
           task.createdBy &&
@@ -303,6 +301,142 @@ class NotificationScheduler {
 
 
 
+
+  private async processDueTodayNotifications() {
+
+    const now =
+      new Date();
+
+
+ 
+
+    const today =
+      new Date(now);
+
+    today.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+
+
+    const tomorrow =
+      new Date(today);
+
+    tomorrow.setDate(
+      tomorrow.getDate() + 1
+    );
+
+
+
+    const tasks =
+      await prisma.task.findMany({
+
+        where: {
+
+          dueDate: {
+            gte: today,
+            lt: tomorrow,
+          },
+
+          assignedToId: {
+            not: null,
+          },
+
+          status: {
+            not: "DONE",
+          },
+        },
+
+        include: {
+
+          assignedTo: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+
+          createdBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+
+          folder: {
+            select: {
+              id: true,
+              projectId: true,
+
+              project: {
+                select: {
+                  id: true,
+                  projectName: true,
+                },
+              },
+            },
+          },
+
+        },
+
+      });
+
+
+ 
+
+    for (const task of tasks) {
+
+      if (!task.dueDate) {
+        continue;
+      }
+
+      if (!task.assignedTo) {
+        continue;
+      }
+
+
+  
+      const alreadySent =
+        await this.hasNotificationBeenSent(
+          task.id,
+          task.assignedTo.id,
+          "DUE_TODAY"
+        );
+
+
+      if (alreadySent) {
+        continue;
+      }
+
+
+
+      await notificationService
+        .notifyDueToday(
+          task,
+          task.assignedTo
+        );
+
+
+
+      await this.markNotificationSent(
+        task.id,
+        task.assignedTo.id,
+        "DUE_TODAY"
+      );
+    }
+  }
+
+
+
+
   private async hasNotificationBeenSent(
     taskId: string,
     userId: string,
@@ -325,6 +459,7 @@ class NotificationScheduler {
 
     return !!notification;
   }
+
 
 
 
