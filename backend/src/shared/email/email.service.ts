@@ -70,7 +70,7 @@ class EmailService {
 
         text:
           text ||
-          "You have received a notification from the Task Management System.",
+          "You have received a notification from the Iphonik Pvt Ltd.",
 
         html,
       });

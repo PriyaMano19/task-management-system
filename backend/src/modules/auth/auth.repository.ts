@@ -4,6 +4,9 @@ export const findUserById = async (id: string) => {
     where: {
       id,
     },
+    include: {
+      role: true,
+    },
   });
 };
 export const findUserByEmail = async (
@@ -89,7 +92,7 @@ export const getUserPermissions = async (userId: string) => {
 
   return (
     user?.role.rolePermissions.map(
-      (rp: { permission: { name: any; }; }) => rp.permission.name
+      (rp) => rp.permission.name
     ) ?? []
   );
 };
