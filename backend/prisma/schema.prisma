@@ -97,7 +97,6 @@ model User {
   role   Role   @relation(fields: [roleId], references: [id])
 
   refreshTokens     RefreshToken[]
-  auditLogs         AuditLog[]
   taskActivities    TaskActivity[]
   taskNotifications TaskNotification[]
 
@@ -132,24 +131,6 @@ model RefreshToken {
   createdAt DateTime @default(now())
 }
 
-model AuditLog {
-  id String @id @default(cuid())
-
-  action String
-
-  module String
-
-  recordId String?
-
-  ipAddress String?
-
-  userAgent String?
-
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
-}
 
 model Project {
   id String @id @default(cuid())
