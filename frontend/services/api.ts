@@ -115,13 +115,17 @@ if (originalRequest._retry) {
         throw new Error("Refresh token not found.");
       }
 
-     const response = await api.post<RefreshResponse>(
-  "/auth/refresh",
-  {
-    refreshToken,
-  }
-);
-
+    const response = await api.post<RefreshResponse>(
+      "/auth/refresh",
+      {
+        refreshToken,
+      },
+      {
+        headers: {
+          Authorization: undefined,
+        },
+      }
+    );
       const newAccessToken = response.data.data.accessToken;
 
       // Save new access token

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { login,logout,refreshAccessToken,resetPassword ,  updateProfile,
+import { login,logout,refreshAccessToken,resetPassword ,  updateProfile,  getCurrentUser,
 } from "./auth.service";
 
 export const loginController = async (
@@ -27,19 +27,23 @@ export const getCurrentUserController = async (
   req: Request,
   res: Response
 ) => {
-  return res.status(200).json({
-    success: true,
-    message: "Current user fetched successfully",
-    data: {
-      id: req.user!.id,
-      firstName: req.user!.firstName,
-      lastName: req.user!.lastName,
-      email: req.user!.email,
-      role: req.user!.role.name,
-      status: req.user!.status,
-      createdAt: req.user!.createdAt,
-    },
-  });
+  try {
+    const user = await getCurrentUser(
+      req.user!.id
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Current user fetched successfully",
+      data: user,
+    });
+
+  } catch (error: any) {
+    return res.status(404).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 export const refreshTokenController = async (
   req: Request,

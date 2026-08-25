@@ -2,13 +2,15 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import {
   findUserByEmail,
+  findUserById,
   saveRefreshToken,
   updateLastLogin,
   findRefreshToken,
   deleteRefreshToken,
   updatePassword,
   deleteUserRefreshTokens,
-  updateUserProfile
+  updateUserProfile,
+  getUserPermissions,
 } from "./auth.repository";
 import {
   generateAccessToken,
@@ -50,6 +52,8 @@ if (!passwordMatched) {
 
   await updateLastLogin(user.id);
 
+  const permissions = await getUserPermissions(user.id);
+
   return {
     user: {
       id: user.id,
@@ -57,6 +61,7 @@ if (!passwordMatched) {
       lastName: user.lastName,
       email: user.email,
       role: user.role.name,
+      permissions,
     },
     accessToken,
     refreshToken,
@@ -99,13 +104,17 @@ export const refreshAccessToken = async (
   };
 };
 export const logout = async (refreshToken: string) => {
-  const storedToken = await findRefreshToken(refreshToken);
-
-  if (!storedToken) {
-    throw new Error("Invalid refresh token");
+  if (!refreshToken) {
+    return {
+      message: "Logged out successfully",
+    };
   }
 
-  await deleteRefreshToken(refreshToken);
+  const storedToken = await findRefreshToken(refreshToken);
+
+  if (storedToken) {
+    await deleteRefreshToken(refreshToken);
+  }
 
   return {
     message: "Logged out successfully",
@@ -149,5 +158,25 @@ export const updateProfile = async (
       status: updatedUser.status,
       createdAt: updatedUser.createdAt,
     },
+  };
+};
+export const getCurrentUser = async (userId: string) => {
+  const user = await findUserById(userId);
+
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  const permissions = await getUserPermissions(userId);
+
+  return {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    role: user.role.name,
+    status: user.status,
+    createdAt: user.createdAt,
+    permissions,
   };
 };
